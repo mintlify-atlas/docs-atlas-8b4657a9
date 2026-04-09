@@ -1,0 +1,247 @@
+---
+title: "§05. Skills"
+sidebarTitle: "Skills"
+description: "How Hermes automatically creates, refines, and applies Skills — reusable procedures extracted from your repeated task patterns."
+keywords: ["skills", "automation", "task patterns", "skill creation", "skill lifecycle", "skill evolution"]
+---
+
+When you repeat the same kind of task often enough, you stop thinking about how to do it and just do it. Expertise is the accumulation of practiced procedures compressed into habit. Hermes's **Skills** system is its version of this: a mechanism for extracting reusable procedures from your interaction patterns and applying them automatically, without you having to ask.
+
+A Skill in Hermes is a named, versioned, editable procedure that the agent uses to handle a recognized task type. Skills start as observations, become explicit definitions, and improve with each successful application.
+
+## What are Skills?
+
+A Skill is a structured unit of procedural knowledge. It defines:
+
+- **A trigger** — the task type or pattern that activates the Skill
+- **A procedure** — the sequence of steps, tool calls, and reasoning patterns to apply
+- **Constraints** — any conditions, limits, or preferences specific to this task type
+- **Performance history** — a record of how the Skill has performed across past uses
+
+Skills are distinct from [semantic memory](/core/memory-system) (which stores facts and preferences) and [episodic memory](/core/memory-system) (which stores records of past sessions). A Skill is operational knowledge — it encodes *how to do something*, not just *what happened* or *what you prefer*.
+
+<Note>
+  Skills are created automatically by Hermes, but they are fully visible and editable. You can inspect the exact procedure Hermes will apply, modify it, or delete it entirely. Hermes never applies a Skill in a way you can't observe or override.
+</Note>
+
+## How Skills are created automatically
+
+Hermes monitors task patterns across sessions through the [learning loop](/core/learning-loop). When it observes the same structural pattern appearing in multiple sessions — same task type, similar inputs, similar successful approach — it flags the pattern as a candidate for Skill creation.
+
+The creation process has three gates:
+
+1. **Frequency threshold** — The pattern must appear a minimum number of times (default: 3) before Hermes considers it for Skill creation. A task you've done once or twice doesn't yet warrant a Skill.
+2. **Success rate** — The pattern must have a consistent successful outcome. Patterns that produce corrections or failures frequently are not promoted to Skills until the approach stabilizes.
+3. **Generalizability** — Hermes checks whether the pattern is specific to a single context or general enough to apply in future sessions. A highly specific one-off procedure won't become a Skill.
+
+When all three gates pass, Hermes creates a Skill definition and surfaces it to you: "I've noticed you often ask me to [task type]. I've created a Skill for this. Here's what it does — let me know if you'd like to adjust it."
+
+## The Skill lifecycle
+
+<Steps>
+  <Step title="Discovery">
+    Hermes identifies a recurring pattern across sessions. It logs the pattern in episodic memory, tagging it as a potential Skill candidate. Each recurrence increases the candidate's confidence score.
+  </Step>
+  <Step title="Creation">
+    Once the frequency and success-rate thresholds are met, Hermes drafts an initial Skill definition. It extracts the core procedure from the episode records and writes it as a structured definition. The Skill is saved with a `draft` status and surfaced to you for review.
+  </Step>
+  <Step title="Refinement">
+    As the Skill is applied in subsequent sessions, Hermes collects performance data: did the procedure succeed? Did you modify the output? Did you override the Skill mid-execution? Each data point feeds back into the Skill definition, adjusting parameters, tightening constraints, or expanding the trigger conditions.
+  </Step>
+  <Step title="Mastery">
+    A Skill reaches `mastered` status when it has been applied consistently with high success rates over an extended period. Mastered Skills are applied with higher confidence and are less likely to prompt Hermes to ask clarifying questions before executing.
+  </Step>
+</Steps>
+
+Skills can also regress. If a mastered Skill starts producing corrections or failures — because your preferences changed, your project structure shifted, or the task type evolved — Hermes demotes it back to `refinement` status and begins collecting new performance data.
+
+## Examples of Skills
+
+<CardGroup cols={2}>
+  <Card title="Code review" icon="magnifying-glass">
+    Triggered when you ask Hermes to review a file or diff. The Skill applies your preferred review criteria — correctness, style, test coverage, error handling — in a consistent order and format. Over time it learns which kinds of issues you care most about in each project.
+  </Card>
+  <Card title="Email drafting" icon="envelope">
+    Triggered when you ask Hermes to draft a professional message. The Skill applies your preferred tone, sign-off format, and level of formality. It learns which contexts call for concise replies versus detailed explanations.
+  </Card>
+  <Card title="Data analysis pipelines" icon="chart-bar">
+    Triggered when you ask Hermes to analyze a dataset or generate a report. The Skill encodes your preferred analysis structure: data validation first, then summary statistics, then visualization, then interpretation. It remembers your preferred chart types and output formats.
+  </Card>
+  <Card title="Test generation" icon="vial">
+    Triggered when you ask Hermes to write tests for new code. The Skill applies your project's testing conventions: which framework, which assertion style, how to structure test files, how to handle mocks and fixtures. It learns the patterns specific to your codebase.
+  </Card>
+  <Card title="Commit message writing" icon="code-branch">
+    Triggered when you're ready to commit. The Skill formats commit messages according to your project's conventions — conventional commits format, ticket number prefixes, line length limits — and infers the right scope from the files changed.
+  </Card>
+  <Card title="Documentation generation" icon="book">
+    Triggered when you ask Hermes to document a function, module, or API. The Skill applies your preferred documentation format (JSDoc, docstrings, plain prose) and level of detail. It learns which parts of your codebase need more or less verbose documentation.
+  </Card>
+</CardGroup>
+
+## Skill definitions
+
+Hermes stores Skills as structured YAML definitions. You can view and edit them directly.
+
+A typical Skill definition looks like this:
+
+```yaml code-review.skill.yaml
+name: code-review
+version: 3
+status: mastered
+trigger:
+  patterns:
+    - "review this"
+    - "check this file"
+    - "look at this code"
+  context_signals:
+    - diff_provided
+    - file_path_mentioned
+
+procedure:
+  steps:
+    - id: validate_syntax
+      action: run_linter
+      on_failure: report_and_continue
+
+    - id: check_logic
+      action: reason_about_correctness
+      focus:
+        - edge_cases
+        - null_handling
+        - error_propagation
+
+    - id: check_style
+      action: compare_to_conventions
+      conventions_source: semantic_memory.code_style
+
+    - id: check_tests
+      action: assess_test_coverage
+      threshold: semantic_memory.test_coverage_preference
+
+    - id: summarize
+      action: produce_review_report
+      format: semantic_memory.review_format_preference
+
+constraints:
+  max_file_lines: 2000
+  always_check: ["security_antipatterns"]
+  never_suggest: ["rewrite_entire_file"]
+
+performance:
+  applications: 47
+  success_rate: 0.94
+  last_applied: "2026-04-07"
+  last_refined: "2026-03-22"
+```
+
+The `procedure.steps` section defines the exact sequence of operations. The `constraints` section encodes what Hermes will and won't do. The `performance` section is updated automatically after each application.
+
+```yaml test-generation.skill.yaml
+name: test-generation
+version: 2
+status: refinement
+trigger:
+  patterns:
+    - "write tests for"
+    - "add tests"
+    - "generate unit tests"
+  context_signals:
+    - new_function_in_context
+    - file_recently_written
+
+procedure:
+  steps:
+    - id: read_implementation
+      action: analyze_function_signatures_and_logic
+
+    - id: identify_cases
+      action: enumerate_test_cases
+      include:
+        - happy_path
+        - edge_cases
+        - error_conditions
+
+    - id: write_tests
+      action: generate_test_file
+      framework: semantic_memory.test_framework
+      style: semantic_memory.test_style
+      fixture_strategy: semantic_memory.mock_preference
+
+constraints:
+  test_file_location: "alongside_source"
+  naming_convention: semantic_memory.test_naming_convention
+  never_skip: ["error_condition_tests"]
+
+performance:
+  applications: 12
+  success_rate: 0.83
+  last_applied: "2026-04-08"
+  last_refined: "2026-04-08"
+```
+
+## Viewing, editing, and deleting Skills
+
+**List all Skills:**
+
+```bash
+hermes skills list
+```
+
+**View a specific Skill definition:**
+
+```bash
+hermes skills show code-review
+```
+
+**Edit a Skill:**
+
+```bash
+hermes skills edit code-review
+```
+
+This opens the Skill definition in your configured editor. Save the file to apply your changes. Hermes validates the definition on save and warns you of any structural issues.
+
+**Disable a Skill without deleting it:**
+
+```bash
+hermes skills disable test-generation
+```
+
+Disabled Skills are not applied automatically but remain in your Skill library. You can re-enable them at any time.
+
+**Delete a Skill:**
+
+```bash
+hermes skills delete code-review
+```
+
+<Warning>
+  Deleting a Skill removes its definition and performance history permanently. The underlying episodic memory that led to its creation is not deleted — if the same pattern recurs frequently, Hermes may create the Skill again. To prevent re-creation, disable the Skill instead of deleting it.
+</Warning>
+
+**Create a Skill manually:**
+
+```bash
+hermes skills create
+```
+
+This opens an interactive prompt that guides you through defining a Skill from scratch. You can also copy an existing Skill definition file and edit it.
+
+## How Skills interact with the learning loop
+
+Skills and the learning loop are deeply intertwined. The loop creates Skills from observed patterns; Skills, once created, feed performance data back into the loop.
+
+When a Skill is applied:
+
+1. The application is logged in episodic memory alongside the outcome.
+2. If you modify the Skill's output, that correction is tagged as a Skill-specific signal and feeds into the refinement process.
+3. If you accept the output without changes, that reinforces the current Skill definition.
+4. The learning loop runs its reflection stage against this data after the session ends, and may propose updates to the Skill definition.
+
+The practical effect is that Skills improve without you having to manually edit them. You simply use Hermes, correct what's wrong, accept what's right, and the Skills evolve to match your actual working patterns.
+
+<Tip>
+  If you want to accelerate a Skill's refinement, be explicit about corrections. Instead of silently editing Hermes's output, tell it what was wrong: "The test structure looks right, but you should always use `describe` blocks — never flat `it` calls." Explicit corrections produce stronger refinement signals than silent edits.
+</Tip>
+
+The next chapter covers the tool ecosystem — the built-in tools Hermes ships with, how to extend them, and how to configure tool safety.

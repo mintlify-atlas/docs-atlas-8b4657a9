@@ -1,0 +1,497 @@
+---
+title: 'Customization'
+description: 'Configure Hermes for your workflow: model selection, memory policies, tool permissions, personas, workspace configs, and multi-project profiles.'
+sidebarTitle: '§10–11 Customization'
+keywords: ['configuration', 'customization', 'config', 'yaml', 'model', 'memory', 'tools', 'persona', 'profile', 'skills']
+---
+
+# §10–11. Customization
+
+Hermes is designed to adapt to you — not the other way around. This chapter covers every major configuration surface: the config file format, the key settings you will actually want to change, how to set a persona, and how to manage multiple project profiles.
+
+---
+
+## Configuration file location and format
+
+All persistent configuration lives in:
+
+```
+~/.hermes/config.yaml
+```
+
+This file is created automatically by `hermes setup`. You can edit it directly in any text editor.
+
+```bash
+# Open in your default editor
+$EDITOR ~/.hermes/config.yaml
+
+# Or use the hermes config command for individual settings
+hermes config set key value
+hermes config get key
+hermes config list
+```
+
+The file uses YAML. A minimal valid config looks like this:
+
+```yaml config.yaml
+provider: anthropic
+model: claude-opus-4-5
+verbosity: normal
+```
+
+A complete config with all sections:
+
+```yaml config.yaml
+# Model provider and selection
+provider: anthropic
+model: claude-opus-4-5
+temperature: 0.7
+
+# Memory
+memory:
+  enabled: true
+  auto_save: true
+  retention_days: 90
+
+# Tools
+tools:
+  shell:
+    enabled: true
+    approval: ask          # ask | auto | deny
+    allowed_commands: []   # empty = all allowed
+    blocked_commands:
+      - "rm -rf /"
+      - ":(){ :|:& };:"
+  web_search:
+    enabled: true
+  file_editor:
+    enabled: true
+
+# Skills
+skills:
+  auto_create: true
+  creation_threshold: 5    # min turns before a skill is created
+  auto_improve: true
+
+# Response style
+verbosity: normal           # brief | normal | verbose
+
+# Thinking (extended reasoning)
+thinking:
+  enabled: false
+  budget_tokens: 8000
+```
+
+<Note>
+Hermes re-reads `config.yaml` at the start of each session. Changes you make to the file take effect on next launch — you do not need to restart a running session.
+</Note>
+
+---
+
+## Configuration categories
+
+<AccordionGroup>
+  <Accordion title="Model provider and model selection" icon="cpu" defaultOpen={true}>
+    The most important settings. Choose your provider and model here, and optionally tune temperature.
+
+    ```yaml config.yaml
+    provider: anthropic          # anthropic | openai | openrouter | nous | moonshot | minimax | custom
+    model: claude-opus-4-5       # model identifier for the chosen provider
+    temperature: 0.7             # 0.0–1.0; lower = more deterministic
+    max_tokens: 8192             # max tokens in the response (provider limits apply)
+    ```
+
+    To switch provider and model interactively:
+
+    ```bash
+    hermes model
+    ```
+
+    To switch non-interactively:
+
+    ```bash
+    hermes config set provider openrouter
+    hermes config set model openrouter:anthropic/claude-opus-4-5
+    ```
+
+    **Using a custom OpenAI-compatible endpoint:**
+
+    ```yaml config.yaml
+    provider: custom
+    model: my-local-model
+    custom_endpoint:
+      base_url: "http://localhost:11434/v1"   # e.g., Ollama
+      api_key: "ollama"                        # placeholder if no auth required
+    ```
+
+    <Tip>
+    OpenRouter gives you access to 200+ models from a single API key. Set `provider: openrouter` and prefix model names with the provider slug, e.g. `openrouter:google/gemini-2.0-flash`. Switch models mid-session with `/model` without leaving the TUI.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Memory retention policies" icon="database">
+    Hermes has three memory layers. Each can be configured independently.
+
+    ```yaml config.yaml
+    memory:
+      enabled: true              # master switch; false disables all memory writes
+      auto_save: true            # save memory entries automatically (vs. only on /remember)
+      retention_days: 90         # how many days to keep episodic session logs
+      semantic:
+        enabled: true            # write to MEMORY.md
+        max_entries: 500         # prune oldest entries beyond this count
+      user_profile:
+        enabled: true            # write to USER.md
+        dialectic_modeling: true # use Honcho for richer user modeling
+      session_search:
+        enabled: true            # index sessions for /history search
+        fts_language: english    # full-text search language
+    ```
+
+    **Manual memory operations:**
+
+    ```bash
+    # View current memory
+    cat ~/.hermes/MEMORY.md
+
+    # Edit memory directly
+    $EDITOR ~/.hermes/MEMORY.md
+
+    # Ask Hermes to save something specific
+    # (in-session)
+    /remember My preferred code style is 4-space indentation, no semicolons.
+    ```
+
+    **Clearing memory:**
+
+    ```bash
+    # Clear session logs only (keeps semantic memory)
+    hermes memory clear --sessions
+
+    # Clear all memory (irreversible)
+    hermes memory clear --all
+    ```
+
+    <Note>
+    Memory files are plain Markdown. You can read, edit, or delete entries directly in a text editor. Hermes does not enforce any special format — it reads the file as-is at the start of each session.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Tool permissions and restrictions" icon="wrench">
+    Hermes ships with 40+ tools. You control which tools are enabled and how much autonomy Hermes has to use them.
+
+    ```yaml config.yaml
+    tools:
+      # Shell / terminal execution
+      shell:
+        enabled: true
+        approval: ask            # ask = prompt before each command
+                                 # auto = run without prompting
+                                 # deny = never execute shell commands
+        allowed_commands: []     # empty list = all commands allowed
+        blocked_commands:
+          - "sudo rm -rf"
+          - "dd if="
+          - "mkfs"
+        working_directory: "~"   # default working directory
+
+      # File operations
+      file_editor:
+        enabled: true
+        approval: auto           # file edits are low-risk; auto is usually fine
+
+      # Web access
+      web_search:
+        enabled: true
+        approval: auto
+
+      web_browser:
+        enabled: true
+        approval: ask            # browsing can be slow; ask prevents runaway calls
+
+      # Code execution (sandboxed)
+      code_interpreter:
+        enabled: true
+        backend: docker          # docker | modal | local
+        timeout_seconds: 30
+
+      # External integrations
+      github:
+        enabled: false           # enable only if you use the GitHub toolset
+      notion:
+        enabled: false
+    ```
+
+    **Quick toggles from the CLI:**
+
+    ```bash
+    hermes tools                    # interactive tool picker
+    hermes tools enable web_browser
+    hermes tools disable github
+    ```
+
+    <Tip>
+    Start with `approval: ask` for shell commands and switch to `auto` only for tasks you trust Hermes to run unsupervised. You can override the approval setting per-session with `/tools shell auto`.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Skill creation thresholds" icon="sparkles">
+    Skills are Hermes's procedural memory — reusable, named procedures it builds from experience. Two settings control when and how skills are created.
+
+    ```yaml config.yaml
+    skills:
+      auto_create: true          # create skills automatically after complex tasks
+      creation_threshold: 5      # minimum number of turns before Hermes considers
+                                 # a task complex enough to create a skill
+      auto_improve: true         # allow Hermes to update existing skills during use
+      hub_sync: false            # sync skills to/from agentskills.io (opt-in)
+      directory: "~/.hermes/skills"   # where user skills are stored
+    ```
+
+    A lower `creation_threshold` means Hermes creates skills more aggressively (sometimes for tasks that don't need them). A higher threshold means Hermes is more selective. The default of `5` works well for most users.
+
+    **Managing skills manually:**
+
+    ```bash
+    # List all skills
+    hermes skills list
+
+    # View a specific skill
+    hermes skills show my-skill-name
+
+    # Delete a skill
+    hermes skills delete my-skill-name
+
+    # Import a skill from agentskills.io
+    hermes skills install agentskills:python-debugger
+    ```
+
+    Skills are Markdown files with a YAML frontmatter header. You can write your own:
+
+    ```markdown ~/.hermes/skills/deploy-to-staging.md
+    ---
+    name: deploy-to-staging
+    description: Deploy the current branch to the staging environment
+    version: 1
+    ---
+
+    ## Steps
+    1. Run the test suite: `npm test`
+    2. Build the Docker image: `docker build -t myapp:staging .`
+    3. Push to staging: `docker push registry.example.com/myapp:staging`
+    4. Trigger the deployment: `curl -X POST https://staging.example.com/deploy`
+    5. Verify the health endpoint returns 200: `curl https://staging.example.com/health`
+    ```
+
+    Invoke a custom skill with its name during a session: `/deploy-to-staging`
+  </Accordion>
+
+  <Accordion title="Response verbosity" icon="align-left">
+    Verbosity controls how much Hermes writes in its responses — not what it reasons about, just what it outputs.
+
+    ```yaml config.yaml
+    verbosity: normal    # brief | normal | verbose
+    ```
+
+    | Setting | Behavior |
+    |---|---|
+    | `brief` | Short answers, minimal explanation. Best for experienced users who know the domain. |
+    | `normal` | Default. Balanced between conciseness and context. |
+    | `verbose` | Adds step-by-step explanations, examples, and rationale. Best for learning or debugging. |
+
+    You can also change verbosity mid-session:
+
+    ```
+    /verbosity brief
+    ```
+
+    Or ask inline:
+
+    ```
+    Answer in one sentence.
+    ```
+
+    Hermes respects explicit instructions about length over the global setting.
+
+    <Tip>
+    If you find Hermes too terse or too verbose on specific topics, use the system prompt (persona) to set expectations rather than the verbosity setting. For example: "When explaining code, always include an example. When answering factual questions, be concise."
+    </Tip>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Setting a persona or system prompt
+
+Hermes's behavior, tone, and focus are controlled by a **SOUL.md** file — its persona. This file is read at the start of every session as a system prompt.
+
+**Default location:** `~/.hermes/SOUL.md`
+
+If this file does not exist, Hermes uses a built-in default persona (helpful, direct, no filler phrases).
+
+**Edit your persona:**
+
+```bash
+$EDITOR ~/.hermes/SOUL.md
+```
+
+Example persona file:
+
+```markdown ~/.hermes/SOUL.md
+You are a senior software engineer with deep expertise in Python and distributed systems.
+You are direct and precise. You do not use filler phrases like "Great question!" or
+"Certainly!". You write idiomatic Python. You prefer functional approaches but use
+classes when they are clearly the right tool.
+
+When reviewing code, always check for:
+- Type annotation completeness
+- Error handling coverage
+- Test coverage gaps
+
+When writing new code, always include type hints and docstrings.
+```
+
+To apply a pre-built personality interactively:
+
+```bash
+hermes personality list        # show available personalities
+hermes personality apply coder # apply the "coder" personality
+```
+
+Or from within a session:
+
+```
+/personality research-assistant
+```
+
+<Note>
+Personalities from `hermes personality list` are additive overlays, not replacements for SOUL.md. They prepend a short directive to your existing persona. Your SOUL.md content is always included.
+</Note>
+
+---
+
+## Workspace-specific configuration
+
+For project-specific settings, create a local `AGENTS.md` file in your project root. Hermes reads this file automatically when you run `hermes` from that directory (or any subdirectory).
+
+```bash
+# In your project root
+touch AGENTS.md
+$EDITOR AGENTS.md
+```
+
+Example workspace config:
+
+```markdown AGENTS.md
+## Project context
+
+This is a FastAPI backend for a fintech application.
+
+- Python 3.11, FastAPI 0.110, SQLAlchemy 2.0, PostgreSQL 15
+- Tests use pytest with `pytest-asyncio`. Run: `pytest -x`
+- Linting: `ruff check .` and `mypy .`
+- DB migrations: `alembic upgrade head`
+
+## Conventions
+
+- All endpoints must have a corresponding integration test
+- Monetary values are stored as integers (cents), never floats
+- Use `Decimal` for any arithmetic on monetary values
+
+## Off-limits
+
+Do not modify `alembic/versions/`. Create new migrations only, never edit existing ones.
+```
+
+Workspace-level `AGENTS.md` settings take precedence over global SOUL.md for project-specific instructions. Both files are included in the system prompt.
+
+<Tip>
+Commit `AGENTS.md` to your project's version control. This ensures every team member using Hermes (or OpenClaw) gets the same project context automatically, without any manual setup.
+</Tip>
+
+---
+
+## Advanced: profiles for different projects
+
+Profiles let you switch between complete configuration presets — different models, tool permissions, verbosity levels, and personas — without editing `config.yaml` each time.
+
+Profiles live in `~/.hermes/profiles/`:
+
+```
+~/.hermes/
+├── config.yaml             # default (active) config
+└── profiles/
+    ├── research.yaml       # reading-heavy, verbose, web search enabled
+    ├── coding.yaml         # brief, shell tools enabled, auto approval
+    └── writing.yaml        # creative, no code tools, verbose
+```
+
+Example profile:
+
+```yaml ~/.hermes/profiles/coding.yaml
+provider: anthropic
+model: claude-opus-4-5
+verbosity: brief
+temperature: 0.3
+tools:
+  shell:
+    enabled: true
+    approval: auto
+  web_search:
+    enabled: false    # avoid web calls during focused coding sessions
+thinking:
+  enabled: true
+  budget_tokens: 4000
+skills:
+  auto_create: true
+  creation_threshold: 3
+```
+
+**Switching profiles:**
+
+```bash
+hermes profile use coding
+hermes profile use research
+hermes profile list
+```
+
+**Creating a profile from the current config:**
+
+```bash
+hermes profile save my-new-profile
+```
+
+<Tip>
+Use a shell alias or a `direnv` `.envrc` file to automatically load the right profile per project:
+
+```bash
+# In your project's .envrc (with direnv)
+export HERMES_PROFILE=coding
+```
+
+Hermes reads `HERMES_PROFILE` at startup and loads the matching profile from `~/.hermes/profiles/`.
+</Tip>
+
+---
+
+## Environment variables reference
+
+Key settings can also be set via environment variables. Environment variables take precedence over `config.yaml`.
+
+| Variable | Description |
+|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `OPENROUTER_API_KEY` | OpenRouter API key |
+| `HERMES_PROFILE` | Profile name to load on startup |
+| `HERMES_MODEL` | Override the active model |
+| `HERMES_VERBOSITY` | Override verbosity (`brief`, `normal`, `verbose`) |
+| `HERMES_CONFIG` | Path to a custom config file |
+| `HERMES_HOME` | Override the `~/.hermes/` directory |
+| `HERMES_NO_COLOR` | Disable color output (set to `1`) |
+
+For the complete list, run:
+
+```bash
+hermes config list --env
+```

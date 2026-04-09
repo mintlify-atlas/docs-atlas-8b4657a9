@@ -1,0 +1,280 @@
+---
+title: '§14. Content creation'
+description: 'Use Hermes to write blog posts, social content, video scripts, and email campaigns — with a style model that evolves to match your voice over time.'
+sidebarTitle: '§14. Content creation'
+keywords: ['writing', 'blog posts', 'social media', 'video scripts', 'newsletter', 'translation', 'content strategy', 'writing style']
+---
+
+# §14. Using Hermes for content creation
+
+Content creation with an AI agent is fundamentally different from using a general-purpose language model. The distinction is memory: a model that has never seen your work produces generic output that needs heavy editing to sound like you. Hermes builds a persistent model of your voice, your audience, your recurring formats, and your content strategy — so the draft it produces on week twelve is dramatically better than the draft it produced on week one.
+
+This chapter covers how to use Hermes across the full range of content formats and how to accelerate the style-learning process.
+
+## How Hermes learns your writing style
+
+Every piece of content you create with Hermes's involvement contributes to a style model stored in long-term memory. This model captures:
+
+- **Vocabulary and register** — formal vs. conversational, technical vs. accessible
+- **Sentence rhythm** — average sentence length, use of fragments, punctuation patterns
+- **Structural preferences** — how you open pieces, how you handle transitions, how you conclude
+- **Recurring moves** — frameworks you use to explain ideas, your approach to counterarguments
+- **Tone markers** — humor, directness, hedging, enthusiasm — and when you deploy each
+
+To seed this model faster, share your best existing content early. A sample of five to ten pieces you're proud of gives Hermes more signal than weeks of gradual accumulation.
+
+```text Prompt to share existing work
+Here are five articles I've written that represent my voice at its best.
+Read them and identify the stylistic patterns I should be consistent on.
+I'll use this as the baseline for everything we create together.
+
+[paste articles or attach files]
+```
+
+## Research-to-draft workflow
+
+The most powerful content creation workflow isn't "write me an article about X." It's a structured research-then-synthesis process that produces drafts grounded in real sources and thinking.
+
+<Steps>
+  <Step title="Define the piece">
+    Start with a clear brief: what is the piece, who is it for, what should they believe or do differently after reading it, and what's the key argument.
+
+    ```text
+    I want to write a technical blog post for senior engineers about why embedding
+    models matter more than vector databases when building RAG systems. The argument
+    is that most teams are optimizing the wrong layer. Target length: 1200 words.
+    ```
+  </Step>
+  <Step title="Gather sources">
+    Share the research material you want Hermes to draw on — papers, articles, data, your own notes. The more specific the sources, the more grounded the draft.
+
+    ```text
+    Here are three papers and two benchmark reports I want to use as evidence.
+    [attach files]
+
+    Also pull in anything from my existing knowledge base that's relevant to
+    retrieval-augmented generation.
+    ```
+  </Step>
+  <Step title="Build the outline">
+    Ask Hermes to generate an outline before writing the full draft. This is where you align on structure, argument flow, and which evidence goes where — it's much faster to revise an outline than a full draft.
+
+    ```text
+    Generate a detailed outline for this piece. For each section, note which
+    sources you'd draw on and what the section needs to accomplish argumentatively.
+    ```
+  </Step>
+  <Step title="Generate the draft">
+    With a confirmed outline, ask Hermes to write the full draft. Specify format, word count, and any style notes.
+
+    ```text
+    Write the full draft based on this outline. Match my usual technical voice —
+    direct, no hedging, concrete examples over abstract claims. Keep it under 1300 words.
+    ```
+  </Step>
+  <Step title="Revise and teach">
+    Edit the draft and, crucially, explain your edits to Hermes. This feedback loop is what accelerates style learning.
+
+    ```text
+    I revised the draft — here's the edited version. The main things I changed:
+    - Rewrote the intro to lead with the problem, not the solution
+    - Cut the third paragraph — it repeated the second
+    - Changed "utilize" to "use" throughout — I never use that word
+    Note these for future drafts.
+    ```
+  </Step>
+</Steps>
+
+## Content types
+
+<Tabs>
+  <Tab title="Articles">
+    ### Blog posts and technical articles
+
+    For long-form written content, Hermes is most useful when it understands your publication context — the platform, the audience, the competitive landscape of similar content.
+
+    **Effective prompt patterns:**
+
+    ```text Evergreen how-to post
+    Write a how-to post on [topic] for developers who are [experience level].
+    The piece should be useful two years from now — no references to current events
+    or version-specific details unless clearly flagged. Target: 800-1000 words.
+    Structure: problem framing, conceptual explanation, step-by-step walkthrough,
+    common mistakes to avoid.
+    ```
+
+    ```text Opinion / argument post
+    Write an opinion piece arguing that [position].
+    Steelman the opposing view in one paragraph before dismantling it.
+    Use concrete examples — no abstract claims without evidence.
+    My usual byline is on [publication] where the audience is [description].
+    ```
+
+    ```text Series post
+    This is post 3 of 5 in my series on [topic].
+    Posts 1 and 2 established [what was covered].
+    This post needs to cover [topic] and set up post 4, which will cover [next topic].
+    Maintain continuity in terminology and examples from the earlier posts.
+    [attach or summarize previous posts]
+    ```
+
+    <Tip>
+      For series content, always share previous installments when starting a new one. Hermes's episodic memory may retain some context from prior sessions, but explicit sharing guarantees continuity.
+    </Tip>
+  </Tab>
+  <Tab title="Social">
+    ### Social media content
+
+    Social content has tighter constraints than long-form: character limits, platform norms, engagement dynamics, and the need to work without additional context (readers won't click for background).
+
+    Hermes handles social content best when it understands your platform focus and your audience's expectations.
+
+    **Effective prompt patterns:**
+
+    ```text Thread / long-form tweet
+    Turn this blog post into a Twitter/X thread. 8-12 tweets.
+    The first tweet must hook on the counterintuitive claim.
+    Each tweet should stand alone as a readable insight.
+    End with a clear CTA to read the full post.
+    [attach post]
+    ```
+
+    ```text LinkedIn post
+    Write a LinkedIn post based on this experience: [describe experience].
+    My LinkedIn audience is [describe audience]. I want to share the lesson
+    without being preachy. Keep it under 300 words.
+    Don't start with "I" — I find that opening weak.
+    ```
+
+    ```text Content repurposing
+    I have this article and I need three different social posts from it:
+    one focused on the data/statistics angle, one focused on the practical
+    how-to angle, and one contrarian take that challenges common assumptions.
+    [attach article]
+    ```
+
+    <Tip>
+      Build a "social voice" Skill by sharing posts that performed well alongside posts that underperformed and asking Hermes to identify the patterns. This produces much better calibrated social content than style guidance written from scratch.
+    </Tip>
+  </Tab>
+  <Tab title="Video">
+    ### Video scripts
+
+    Video scripts require different skills than written content: they need to work spoken aloud, handle pacing and visual cues, and maintain energy across the full runtime.
+
+    Hermes can write scripts, edit for spoken naturalness, and generate supporting materials (thumbnails text, description, chapter markers).
+
+    **Effective prompt patterns:**
+
+    ```text YouTube explainer
+    Write a script for a 10-minute YouTube video explaining [topic] to [audience].
+    Structure: hook (45 seconds) → context (90 seconds) → main content (6 minutes)
+    → summary and CTA (90 seconds).
+    Include [B-ROLL] and [GRAPHIC] cues where visuals would help.
+    My presenting style is conversational — write as I'd actually speak, not
+    as I'd write an article.
+    ```
+
+    ```text Short-form video
+    Write a 60-second script for a TikTok/Reel on [topic].
+    Hook in the first 3 seconds — lead with the surprising outcome, not the setup.
+    Cut every word that doesn't earn its place.
+    End with a direct question to drive comments.
+    ```
+
+    ```text Script editing
+    Here's a rough script I wrote. Edit it for spoken naturalness:
+    - Break up sentences longer than 20 words
+    - Replace any word I wouldn't say in conversation
+    - Add brief pauses [PAUSE] where I should let a point land
+    - Flag any sections where the logic won't track without visuals
+    [attach script]
+    ```
+  </Tab>
+  <Tab title="Email">
+    ### Newsletters and email campaigns
+
+    Email requires balancing depth with scannability, maintaining a consistent sender voice, and driving a single clear action per send.
+
+    **Effective prompt patterns:**
+
+    ```text Newsletter issue
+    Write issue #[number] of my newsletter [name].
+    Theme this week: [topic].
+    Sections I want: intro (200 words, connects current events to theme),
+    main feature (600 words, based on [source material]), 3 quick links with
+    one-sentence annotations, closing thought (100 words).
+    Match the tone of previous issues: [attach 2-3 previous issues or describe tone].
+    ```
+
+    ```text Cold outreach email
+    Write an outreach email to [target audience type] offering [value proposition].
+    Context: [explain the situation].
+    Constraints: under 150 words, no buzzwords, no "I hope this finds you well",
+    one specific personalization hook, one clear ask in the last line.
+    ```
+
+    ```text Re-engagement campaign
+    Write a 3-email re-engagement sequence for subscribers who haven't opened
+    in 90 days. Email 1: soft check-in. Email 2: offer something valuable (use
+    [specific piece of content]). Email 3: explicit opt-out option with a final
+    value statement. Each under 200 words.
+    ```
+
+    <Note>
+      For newsletter writing, Hermes benefits from seeing your full send history if you have it. Patterns in what generated replies, click-throughs, or unsubscribes are useful training signal for your newsletter Skill.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Creating content templates and recurring formats
+
+If you produce the same format repeatedly — a weekly roundup, a product changelog, a monthly retrospective — you can encode the format as a template that Hermes applies consistently.
+
+```text Creating a template
+I write a weekly newsletter section called "Three Things" — always three short
+observations formatted as: bold claim, one supporting sentence, one implication.
+Here are five examples of the format done well.
+
+[paste examples]
+
+Save this as a template called "Three Things" so I can invoke it with
+"write a Three Things section about [topic]" without re-explaining the format.
+```
+
+Once a template is saved as part of your content Skill, invoking it is as simple as:
+
+```text
+Write a Three Things section about the recent changes to transformer architectures.
+```
+
+## Translation and localization
+
+Hermes is well-suited to translation workflows that go beyond word-for-word accuracy — particularly for content that needs to feel native rather than translated.
+
+The Hermes Agent Orange Book itself is available in both English and Chinese (中文), and the localization challenge there illustrates the key issue: technical AI concepts, cultural references, and the author's voice all require thoughtful adaptation, not just substitution.
+
+```text Localization prompt
+Translate this article into Simplified Chinese. This is for a Chinese tech
+audience, not an academic or formal context. Where English idioms don't
+translate, find equivalent Chinese expressions that carry the same weight.
+Preserve the tone — direct, slightly informal, confident.
+Flag any concepts that may need expanded explanation for a Chinese audience
+unfamiliar with the specific US tech context.
+[attach article]
+```
+
+For high-stakes content, use a two-pass approach: ask Hermes to translate, then ask it to review the translation specifically for naturalness and cultural fit in the target language.
+
+## How Skills evolve to match your content style
+
+A content-focused Skill develops through the feedback you provide over time. Explicit corrections accelerate this faster than passive accumulation.
+
+The most useful feedback forms:
+
+- **Positive examples**: "This paragraph is exactly the register I want — note this pattern"
+- **Negative examples**: "I never use passive voice in intros — strike this pattern"
+- **Preference statements**: "For technical content, I prefer shorter paragraphs than for narrative content"
+- **Structural rules**: "Opinion pieces always end with an open question, never a call to action"
+
+After several months of regular use, your content Skill becomes a detailed style guide that Hermes applies automatically — capturing nuances that would be difficult to articulate as explicit rules but are obvious from your body of work.

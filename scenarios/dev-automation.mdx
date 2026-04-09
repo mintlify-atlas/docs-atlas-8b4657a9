@@ -1,0 +1,249 @@
+---
+title: '§13. Development automation'
+description: 'Use Hermes to automate code review, test generation, documentation, debugging, and refactoring — with a memory system that learns your codebase over time.'
+sidebarTitle: '§13. Dev automation'
+keywords: ['code review', 'test generation', 'documentation', 'debugging', 'refactoring', 'codebase', 'automation']
+---
+
+# §13. Using Hermes for development automation
+
+Development work involves a large class of tasks that are high-value but time-consuming: reviewing pull requests, writing tests, keeping documentation current, tracing bugs, and refactoring aging code. These are exactly the tasks that benefit from an agent that understands your specific codebase, not just general programming patterns.
+
+Hermes is useful here for a specific reason: its memory system means it doesn't start from zero on each task. After an onboarding period, Hermes understands your project's structure, naming conventions, architectural decisions, and testing patterns — and applies that context automatically.
+
+## Automation categories
+
+<CardGroup cols={2}>
+  <Card title="Code review" icon="code-compare">
+    Hermes reviews PRs against your team's standards — not generic best practices. It flags issues in the context of how *your* codebase is structured and what *your* conventions expect.
+  </Card>
+  <Card title="Test generation" icon="vial">
+    Given a function or module, Hermes generates unit and integration tests that match your testing framework, mock patterns, and coverage expectations.
+  </Card>
+  <Card title="Documentation generation" icon="file">
+    Hermes reads your code and generates docstrings, README sections, and API reference entries — written to match the style and depth of your existing docs.
+  </Card>
+  <Card title="Debugging assistance" icon="bug">
+    Paste a stack trace or describe unexpected behavior. Hermes traces the error through your codebase, identifies likely root causes, and suggests targeted fixes.
+  </Card>
+  <Card title="Refactoring" icon="arrows-rotate">
+    Hermes identifies repeated patterns, violation of your own conventions, and opportunities to simplify — and proposes refactors with explanations of the tradeoff.
+  </Card>
+  <Card title="Onboarding" icon="door-open">
+    New to a codebase? Hermes reads the source and builds a working mental model it shares with you — architecture, key modules, data flow, and gotchas.
+  </Card>
+</CardGroup>
+
+## Code review automation
+
+To use Hermes for PR review, share the diff and ask it to evaluate against your standards.
+
+```text Example prompt
+Review this PR diff. We use the repository convention of always returning Result types
+from service-layer functions rather than throwing exceptions. Flag anything that violates
+this and any other issues you see.
+```
+
+Hermes returns line-by-line comments in the same format as a human reviewer, prioritized by severity. Once it has reviewed several PRs in your repo, it builds a Skill that internalizes your review standards so you don't need to re-specify them each time.
+
+**What Hermes checks by default:**
+
+- Logic errors and edge cases
+- Consistency with patterns it has seen in the rest of your codebase
+- Performance concerns (N+1 queries, unnecessary re-renders, etc.)
+- Security issues (unvalidated inputs, hardcoded secrets, unsafe deserialization)
+- Test coverage for new code paths
+
+## Test generation
+
+Given a source file, Hermes generates a test file that matches your existing test conventions.
+
+<CodeGroup>
+
+```python source: payments/processor.py
+class PaymentProcessor:
+    def __init__(self, gateway: PaymentGateway):
+        self.gateway = gateway
+
+    def charge(self, amount: Decimal, currency: str, token: str) -> ChargeResult:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        if currency not in SUPPORTED_CURRENCIES:
+            raise ValueError(f"Unsupported currency: {currency}")
+        return self.gateway.charge(amount, currency, token)
+```
+
+```python generated: tests/payments/test_processor.py
+import pytest
+from decimal import Decimal
+from unittest.mock import MagicMock, patch
+from payments.processor import PaymentProcessor
+from payments.types import ChargeResult
+
+@pytest.fixture
+def mock_gateway():
+    return MagicMock()
+
+@pytest.fixture
+def processor(mock_gateway):
+    return PaymentProcessor(gateway=mock_gateway)
+
+class TestCharge:
+    def test_successful_charge(self, processor, mock_gateway):
+        mock_gateway.charge.return_value = ChargeResult(success=True, transaction_id="txn_123")
+        result = processor.charge(Decimal("10.00"), "USD", "tok_test")
+        assert result.success is True
+        mock_gateway.charge.assert_called_once_with(Decimal("10.00"), "USD", "tok_test")
+
+    def test_rejects_zero_amount(self, processor):
+        with pytest.raises(ValueError, match="Amount must be positive"):
+            processor.charge(Decimal("0"), "USD", "tok_test")
+
+    def test_rejects_negative_amount(self, processor):
+        with pytest.raises(ValueError, match="Amount must be positive"):
+            processor.charge(Decimal("-5.00"), "USD", "tok_test")
+
+    def test_rejects_unsupported_currency(self, processor):
+        with pytest.raises(ValueError, match="Unsupported currency"):
+            processor.charge(Decimal("10.00"), "XYZ", "tok_test")
+```
+
+</CodeGroup>
+
+<Note>
+  When generating tests for code that touches a database, external API, or filesystem, Hermes will ask you to confirm the mocking approach before generating. It will not assume a mocking strategy it hasn't seen in your existing test suite.
+</Note>
+
+## Documentation generation
+
+Hermes generates documentation that matches your existing style — not a generic template. Point it at a module and specify the target format:
+
+```text Example prompt
+Generate docstrings for every public function in `src/api/routes/users.py`.
+Match the Google-style docstrings used elsewhere in the codebase.
+Also generate a section for the README API reference covering these endpoints.
+```
+
+For TypeScript projects, Hermes generates JSDoc comments and can output OpenAPI schemas from your route definitions:
+
+```typescript src/api/routes/users.ts
+/**
+ * Creates a new user account.
+ *
+ * @param req - Express request. Body must include `email` and `password`.
+ * @param res - Express response. Returns 201 with the created user on success,
+ *   400 for validation errors, or 409 if the email is already registered.
+ *
+ * @example
+ * POST /api/users
+ * { "email": "user@example.com", "password": "securepassword" }
+ * → 201 { "id": "usr_abc123", "email": "user@example.com", "createdAt": "..." }
+ */
+export async function createUser(req: Request, res: Response): Promise<void> {
+  // implementation
+}
+```
+
+## Debugging assistance
+
+Paste a stack trace or describe the symptom and Hermes traces it through your codebase.
+
+```text Example prompt
+Getting this error in production:
+
+TypeError: Cannot read properties of undefined (reading 'userId')
+  at OrderService.createOrder (src/services/order.ts:47)
+  at async POST /api/orders (src/routes/orders.ts:23)
+
+The order creation endpoint worked fine in staging. What could cause userId to be
+undefined here but not in staging?
+```
+
+Hermes will ask for the relevant source files if it doesn't already have them in context, then reason through likely causes: environment differences, missing middleware, race conditions in async code, or schema mismatches. It produces a ranked list of hypotheses with suggested diagnostic steps for each.
+
+## Refactoring
+
+Hermes identifies refactoring opportunities and proposes changes with explicit tradeoff explanations.
+
+```text Example prompt
+Look at the `src/services/` directory. Are there patterns being repeated across
+multiple service files that could be extracted into a shared base class or utility?
+Show me the most impactful consolidation you'd recommend.
+```
+
+<Note>
+  For refactors that affect more than one file, Hermes always asks for confirmation before making changes. It will show you a summary of all affected files and the nature of each change before proceeding.
+</Note>
+
+## How Hermes's memory improves with codebase familiarity
+
+Hermes's memory system makes it progressively more useful as it accumulates context about your project:
+
+- **Working memory** holds the files and context relevant to the current task.
+- **Episodic memory** records past debugging sessions, which bugs were found where, and which refactors were accepted or rejected — so Hermes doesn't suggest the same declined refactor twice.
+- **Semantic memory** builds a structural model of your codebase: which modules depend on which, where the boundary between layers is, what invariants your code maintains.
+
+After a few weeks of regular use, Hermes can answer architectural questions ("what's the cleanest place to add rate limiting?") drawing on a genuine understanding of your specific project rather than generic advice.
+
+## How Skills develop for your codebase
+
+Skills that develop for development automation tasks typically encode:
+
+- Your preferred testing framework and patterns (pytest fixtures vs. factory boy, etc.)
+- Your docstring style and level of detail
+- Which architectural rules matter most (service layer patterns, domain model constraints)
+- Which review concerns you care about (you may care deeply about performance but less about stylistic consistency)
+- Your preferred level of autonomy — how much Hermes should do before checking in
+
+Once a Skill is established, you can trigger a full workflow with a short prompt like "review this PR" or "generate tests for this file" without re-specifying your standards each time.
+
+## Example: onboarding Hermes to a new project
+
+When you start working with Hermes on a codebase it hasn't seen before, a structured onboarding produces better results than ad hoc usage. The following process takes about 20 minutes and pays dividends immediately.
+
+<Steps>
+  <Step title="Share the project structure">
+    Give Hermes a high-level map of the codebase. Paste the output of a directory tree command, point it at key files, and provide a one-paragraph description of what the project does.
+
+    ```text
+    Here's the top-level structure of the project. It's a TypeScript API server using
+    Express and PostgreSQL. The main layers are: routes → services → repositories → DB.
+    We use Zod for input validation and Knex for query building.
+
+    [paste directory tree]
+    ```
+  </Step>
+  <Step title="Share architectural decisions">
+    Explain the non-obvious decisions that aren't visible from the code alone — why certain patterns exist, what constraints the codebase operates under, and what's intentionally not there.
+
+    ```text
+    A few things worth knowing:
+    - We always return Result<T, E> from service methods, never throw
+    - Repository methods are always async, even if the current impl is synchronous
+    - We don't use an ORM — direct SQL via Knex is intentional
+    - Auth is handled in middleware, not in route handlers
+    ```
+  </Step>
+  <Step title="Walk through a representative module">
+    Pick one module that exemplifies your patterns and walk Hermes through it. Ask it to summarize what it understands — this reveals gaps or misreadings before you depend on it.
+
+    ```text
+    Here's the users service. Walk me back through what you understand about how
+    user creation works end to end, including where validation happens and what
+    gets persisted.
+    ```
+  </Step>
+  <Step title="Run a test task">
+    Give Hermes a small, bounded task and evaluate the output against your standards. This calibrates expectations and surfaces any convention mismatches early.
+
+    ```text
+    Generate tests for the `getUserById` method in the users service.
+    Use the same patterns as the existing tests in `tests/services/order.test.ts`.
+    ```
+  </Step>
+  <Step title="Review and correct the Skill draft">
+    After the onboarding session, Hermes will propose a Skill summarizing what it learned about your codebase conventions. Review it and correct any misunderstandings before it gets persisted.
+
+    Pay particular attention to: testing patterns, naming conventions, error handling, and any rules Hermes inferred incorrectly from examples.
+  </Step>
+</Steps>

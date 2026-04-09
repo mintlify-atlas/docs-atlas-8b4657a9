@@ -1,0 +1,291 @@
+---
+title: 'Installation'
+description: 'Install Hermes Agent on your machine and get it configured with a model provider in minutes.'
+sidebarTitle: '§07 Installation'
+keywords: ['install', 'setup', 'npm', 'pip', 'hermes', 'api key', 'requirements']
+---
+
+# §07. Installation
+
+Hermes Agent runs on Linux, macOS, and Windows (via WSL2). This guide walks you through every step — from checking system requirements to verifying a working installation.
+
+## System requirements
+
+Before you install, confirm your environment meets these minimums:
+
+| Requirement | Minimum | Notes |
+|---|---|---|
+| OS | macOS 12+, Ubuntu 20.04+, Debian 11+, WSL2 | Native Windows not supported |
+| Python | 3.10+ | 3.11 recommended |
+| Node.js | 18+ | Required for TUI rendering |
+| RAM | 512 MB free | More for large context workloads |
+| Disk | 200 MB | Excludes model weights |
+| Git | Any recent version | Required by the installer |
+
+<Note>
+Windows users must install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) first. The native Windows environment is not supported. All commands in this guide assume a Unix-style shell.
+</Note>
+
+---
+
+## Installation methods
+
+Choose the method that fits your workflow. The one-line installer is recommended for most users.
+
+<Steps>
+  <Step title="Choose your installation method">
+    Pick one of the three methods below. The one-line installer handles all dependencies automatically and is the fastest path to a working install.
+
+    <CodeGroup>
+
+    ```bash One-line installer (recommended)
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+    ```
+
+    ```bash pip (Python users)
+    pip install hermes-agent
+    ```
+
+    ```bash npx (zero-install, try before committing)
+    npx hermes-agent
+    ```
+
+    </CodeGroup>
+
+    **One-line installer** — detects your OS, installs Python 3.11 if needed, installs Node.js, sets up a virtualenv, and drops a `hermes` command on your `$PATH`. This is the method used throughout the rest of this guide.
+
+    **pip** — installs the `hermes` Python package and CLI into your active Python environment. Use this if you manage your own virtualenvs or if you're embedding Hermes into a larger Python project.
+
+    **npx** — runs Hermes directly without a global install. Useful for a quick trial. For persistent use, switch to the installer or pip.
+
+  </Step>
+
+  <Step title="Reload your shell">
+    After the installer finishes, reload your shell so the `hermes` command is available:
+
+    ```bash
+    source ~/.bashrc
+    # or, if you use zsh:
+    source ~/.zshrc
+    ```
+
+    The installer prints the exact command to run at the end of its output. If you skipped this step and `hermes` is not found, run the reload command and try again.
+  </Step>
+
+  <Step title="Set up your API key">
+    Hermes needs access to at least one model provider. Run the setup wizard to configure one interactively:
+
+    ```bash
+    hermes setup
+    ```
+
+    The wizard walks you through choosing a provider, entering your API key, and selecting a default model. Supported providers include:
+
+    - **Anthropic** (Claude models) — `ANTHROPIC_API_KEY`
+    - **OpenAI** (GPT models) — `OPENAI_API_KEY`
+    - **OpenRouter** (200+ models) — `OPENROUTER_API_KEY`
+    - **Nous Portal** (Nous-hosted models) — `NOUS_API_KEY`
+    - **Kimi / Moonshot** — `MOONSHOT_API_KEY`
+    - **MiniMax** — `MINIMAX_API_KEY`
+    - **Any OpenAI-compatible endpoint** — set `HERMES_OPENAI_BASE_URL`
+
+    You can skip the wizard and set the key directly in your shell if you prefer:
+
+    ```bash
+    export ANTHROPIC_API_KEY="sk-ant-..."
+    ```
+
+    Or save it permanently in your config file (see §10 Customization for the config file location).
+
+    <Warning>
+    Never commit API keys to version control. Do not paste them into shared terminals, CI logs, or chat. Store them in environment variables or in `~/.hermes/config.yaml`, which is excluded from git by default. If a key is leaked, rotate it immediately in your provider's dashboard.
+    </Warning>
+
+  </Step>
+
+  <Step title="Choose your default model">
+    If you did not use the setup wizard, select a model now:
+
+    ```bash
+    hermes model
+    ```
+
+    This opens an interactive picker. Use arrow keys to choose a provider, then a model. Your selection is saved to `~/.hermes/config.yaml` and used for all future sessions until you change it.
+
+    To set a model non-interactively:
+
+    ```bash
+    hermes config set model anthropic:claude-opus-4-5
+    ```
+
+  </Step>
+
+  <Step title="Verify the installation">
+    Run the built-in diagnostics command to confirm everything is working:
+
+    ```bash
+    hermes doctor
+    ```
+
+    A healthy install prints something like:
+
+    ```
+    ✓ Python 3.11.9
+    ✓ Node.js 20.14.0
+    ✓ hermes v0.7.0
+    ✓ Model provider: anthropic (claude-opus-4-5)
+    ✓ Config file: ~/.hermes/config.yaml
+    ✓ Tools: 42 available
+    ✓ Memory store: ready
+    ```
+
+    If any line shows a red `✗`, follow the suggestion printed next to it or consult the troubleshooting section below.
+
+    For a quick end-to-end smoke test, run Hermes with a one-shot prompt:
+
+    ```bash
+    hermes --print "What is 2 + 2? Reply in one word."
+    ```
+
+    Expected output: `four` (or equivalent). If this returns a response, your API key and model are configured correctly.
+  </Step>
+</Steps>
+
+---
+
+## Binary download (alternative)
+
+If you cannot run the installer script or pip, download a pre-built binary from the [GitHub releases page](https://github.com/NousResearch/hermes-agent/releases). Binaries are available for Linux (x86\_64, arm64) and macOS (arm64).
+
+```bash
+# Example: Linux x86_64
+curl -L https://github.com/NousResearch/hermes-agent/releases/latest/download/hermes-linux-x86_64 -o hermes
+chmod +x hermes
+sudo mv hermes /usr/local/bin/hermes
+hermes --version
+```
+
+Binaries are self-contained — no Python or Node.js required. However, some TUI features depend on Node.js being available at runtime.
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="`hermes: command not found` after installation">
+    The `hermes` binary was not added to your `$PATH`, or you have not reloaded your shell.
+
+    1. Run `source ~/.bashrc` (or `source ~/.zshrc` for zsh).
+    2. Check that the install directory is on your `$PATH`:
+       ```bash
+       echo $PATH | tr ':' '\n' | grep -E '(hermes|local/bin|\.local)'
+       ```
+    3. If not present, add the install directory manually:
+       ```bash
+       echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+       source ~/.bashrc
+       ```
+    4. If the problem persists, re-run the installer — it will skip steps that are already complete.
+  </Accordion>
+
+  <Accordion title="Python version is too old">
+    Hermes requires Python 3.10 or later. Check your version:
+
+    ```bash
+    python3 --version
+    ```
+
+    If it is below 3.10, install a newer version. On Ubuntu/Debian:
+
+    ```bash
+    sudo apt update && sudo apt install python3.11 python3.11-venv
+    ```
+
+    On macOS with Homebrew:
+
+    ```bash
+    brew install python@3.11
+    ```
+
+    After upgrading Python, re-run the installer.
+  </Accordion>
+
+  <Accordion title="API key errors (`AuthenticationError` or 401)">
+    This means the key you provided is invalid, expired, or for the wrong provider.
+
+    1. Double-check that you copied the full key with no leading/trailing spaces.
+    2. Verify the key is active in your provider's dashboard.
+    3. Confirm you are using the right environment variable name for your provider:
+       ```bash
+       hermes config set provider anthropic
+       export ANTHROPIC_API_KEY="sk-ant-..."
+       hermes doctor
+       ```
+    4. If you set the key inside `~/.hermes/config.yaml`, make sure the YAML is valid (no tabs, correct indentation).
+  </Accordion>
+
+  <Accordion title="Node.js not found or version too old">
+    Some TUI features require Node.js 18 or later. Check:
+
+    ```bash
+    node --version
+    ```
+
+    Install or update Node.js using your system package manager, or via [nvm](https://github.com/nvm-sh/nvm):
+
+    ```bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+    source ~/.bashrc
+    nvm install 20
+    nvm use 20
+    ```
+
+    After installing Node.js, restart Hermes.
+  </Accordion>
+
+  <Accordion title="Permission denied when running the installer">
+    The installer writes to `~/.local/bin` and `~/.hermes/`. It should not need `sudo`. If you see a permission error:
+
+    1. Check that your home directory is writable: `ls -la ~`
+    2. Do not run the installer with `sudo` — it will install to `/root` instead of your home directory.
+    3. If you are on a shared machine with a restricted home directory, use the pip method inside a virtualenv you control:
+       ```bash
+       python3 -m venv ~/envs/hermes
+       source ~/envs/hermes/bin/activate
+       pip install hermes-agent
+       ```
+  </Accordion>
+
+  <Accordion title="SSL certificate errors during install">
+    Corporate proxies and some VPN configurations intercept TLS. Try:
+
+    ```bash
+    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org hermes-agent
+    ```
+
+    Or configure your proxy settings:
+
+    ```bash
+    export HTTPS_PROXY="http://your.proxy:8080"
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Updating Hermes
+
+To update to the latest release:
+
+```bash
+hermes update
+```
+
+This pulls the latest version and restarts with the same configuration. Your memories, skills, and config file are preserved across updates.
+
+To pin to a specific version:
+
+```bash
+pip install "hermes-agent==0.8.0"
+```

@@ -1,0 +1,216 @@
+---
+title: 'Your first conversation'
+description: 'Start Hermes for the first time, complete the onboarding flow, and understand how Hermes responds, reasons, and remembers.'
+sidebarTitle: '§08 First conversation'
+keywords: ['first conversation', 'onboarding', 'getting started', 'hermes', 'session', 'memory', 'thinking']
+---
+
+# §08. Your first conversation
+
+This chapter walks through everything that happens from the moment you type `hermes` to the end of your first productive session. Read it in order — each step builds on the last.
+
+---
+
+## Starting Hermes
+
+<Steps>
+  <Step title="Launch the terminal interface">
+    Open a terminal and run:
+
+    ```bash
+    hermes
+    ```
+
+    Hermes starts a full terminal UI (TUI). You will see:
+
+    - A header bar showing the active model and session name
+    - An empty message area
+    - A text input at the bottom
+    - A status line showing memory and token counts
+
+    If this is your first launch and you skipped `hermes setup`, Hermes will detect the missing configuration and prompt you to run the setup wizard before continuing. Follow the prompts — it takes about two minutes.
+
+    <Note>
+    The first startup takes a few seconds longer than subsequent ones. Hermes is initializing its memory store, loading any existing skills, and checking for updates in the background.
+    </Note>
+  </Step>
+
+  <Step title="Complete the onboarding wizard (first time only)">
+    On first launch after a fresh install, Hermes runs a short onboarding sequence:
+
+    1. **Provider selection** — Hermes asks which model provider to use (Anthropic, OpenAI, OpenRouter, etc.).
+    2. **API key** — You enter your key; Hermes validates it with a test call before saving.
+    3. **Model selection** — Hermes recommends a default model for your provider.
+    4. **Name** — Hermes asks what to call you. This is stored in your user profile and used in memory summaries.
+    5. **Toolset** — Hermes presents the active toolset and asks if you want to enable or restrict any tools.
+
+    You can re-run the wizard at any time with:
+
+    ```bash
+    hermes setup
+    ```
+
+    <Tip>
+    If you are migrating from OpenClaw, run `hermes claw migrate` before setup. It imports your memories, skills, API keys, and persona file automatically, so the wizard starts with most fields pre-filled.
+    </Tip>
+  </Step>
+
+  <Step title="Read Hermes's opening message">
+    After setup, Hermes introduces itself in the first message of every new session. It briefly describes:
+
+    - The active model and toolset
+    - What skills are loaded and available
+    - Any pending cron jobs or scheduled tasks
+    - A short summary of what it remembers about you (if this is not your first session)
+
+    This opening message is intentionally concise. Hermes is not performing — it is giving you a factual status snapshot so you know exactly what state it is starting in.
+
+    <Note>
+    The opening message is generated, not hard-coded. It changes between sessions as your memory, skills, and scheduled tasks change. If something looks wrong — wrong model, unexpected skills — you can fix it with `/model`, `/skills`, or `hermes config set` before sending your first message.
+    </Note>
+  </Step>
+
+  <Step title="Send your first message">
+    Type your first request and press **Enter** to send. You can use multiline input with **Shift+Enter**.
+
+    Here is a simple, concrete example to start with:
+
+    ```
+    Summarize the following in three bullet points:
+
+    Hermes Agent is an open-source AI agent framework built by Nous Research.
+    It features a built-in learning loop, a three-layer memory system, and
+    automatic skill creation. It runs on a terminal, supports Telegram and
+    Discord, and works with any OpenAI-compatible model provider.
+    ```
+
+    Hermes will respond with something like:
+
+    ```
+    • Hermes Agent is an open-source framework by Nous Research designed for
+      self-improving AI agents.
+    • It uses a three-layer memory system and automatically creates skills
+      from completed tasks.
+    • It operates via terminal or messaging platforms (Telegram, Discord) and
+      supports any OpenAI-compatible model provider.
+    ```
+
+    For a code-generation example, try:
+
+    ```
+    Write a Python function that accepts a list of integers and returns
+    the top-3 most frequent values. Include a docstring and a short usage example.
+    ```
+  </Step>
+
+  <Step title="Observe the response format">
+    Hermes structures its responses to be scannable:
+
+    - **Direct answers first** — Hermes does not preamble. The useful content comes at the start.
+    - **Code blocks** — Fenced with language tags and a filename when relevant.
+    - **Tool output** — When Hermes runs a shell command, reads a file, or searches the web, the tool call and its output are shown inline in a collapsible block before the final response.
+    - **Confidence caveats** — If Hermes is uncertain about a fact, it says so explicitly rather than hallucinating.
+
+    <Note>
+    Hermes does not add sign-offs, affirmations, or filler phrases by default. If you want a different tone or style, you can set a persona — see §10 Customization.
+    </Note>
+  </Step>
+
+  <Step title="View Hermes's reasoning (show thinking)">
+    Hermes logs its reasoning in a collapsible **Thinking** block that appears before the response when the model supports extended thinking. To expand it, click the block header or press **T** in the TUI.
+
+    You can also ask Hermes to explain its reasoning explicitly:
+
+    ```
+    Walk me through your reasoning step by step before giving the answer.
+    ```
+
+    To enable extended thinking globally, add this to your config:
+
+    ```yaml
+    thinking:
+      enabled: true
+      budget_tokens: 8000
+    ```
+
+    <Tip>
+    Expanded thinking is especially useful when debugging incorrect answers. If Hermes reaches the wrong conclusion, the thinking block usually shows exactly where its reasoning went wrong — which makes it much easier to correct with a targeted follow-up.
+    </Tip>
+  </Step>
+
+  <Step title="Use slash commands during the session">
+    While in a conversation, you can use slash commands to control the session without leaving the TUI:
+
+    | Command | What it does |
+    |---|---|
+    | `/new` | Start a fresh conversation (previous session is saved) |
+    | `/undo` | Remove the last turn from the conversation |
+    | `/retry` | Re-run the last user message with a fresh response |
+    | `/compress` | Summarize and compress the conversation to free context |
+    | `/usage` | Show token usage and estimated cost for this session |
+    | `/model` | Switch the active model mid-session |
+    | `/skills` | List all loaded skills |
+    | `/personality [name]` | Apply a named persona |
+
+    Type `/` in the input to trigger autocomplete for all available commands.
+  </Step>
+
+  <Step title="End the session">
+    Press **Ctrl+C** or type `/exit` to close the TUI. Hermes automatically saves the conversation to its session history before exiting.
+
+    Your session can be recalled later with:
+
+    ```bash
+    hermes --resume
+    ```
+
+    Or you can search past sessions:
+
+    ```bash
+    hermes history search "summarize"
+    ```
+  </Step>
+</Steps>
+
+---
+
+## What Hermes remembers after the first session
+
+Hermes has three layers of memory. After your first session, here is what gets written:
+
+**Episodic memory (session log)**
+The full conversation is saved and indexed with FTS5 full-text search. You can retrieve it, search it, or ask Hermes to recall specific exchanges from previous sessions.
+
+**Semantic memory (MEMORY.md)**
+If you shared something significant about yourself, your project, or your preferences during the session, Hermes may write a memory entry. It does this proactively — you do not need to ask. You can inspect and edit your memory file directly:
+
+```bash
+cat ~/.hermes/MEMORY.md
+```
+
+**User profile (USER.md)**
+Hermes builds a model of who you are over time using [Honcho](https://github.com/plastic-labs/honcho) dialectic user modeling. After the first session, this file will typically contain your name, your stated role or domain, and any strong preferences you expressed.
+
+```bash
+cat ~/.hermes/USER.md
+```
+
+<Note>
+Hermes never sends your memory files to third parties. They are local files in `~/.hermes/`. The only external call is to your chosen model provider for inference.
+</Note>
+
+**Skills (automatic creation)**
+If your first session involved a complex, multi-step task, Hermes may create a skill — a reusable procedure stored in `~/.hermes/skills/`. Skills are not created after every session; Hermes uses a configurable threshold to decide when a task is complex enough to warrant one. You can review created skills with `/skills`.
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Multi-platform setup" icon="laptop" href="/setup/multi-platform">
+    Run Hermes on macOS, Windows, Linux, VS Code, and Cursor.
+  </Card>
+  <Card title="Customization" icon="sliders" href="/setup/customization">
+    Configure your model, memory policies, tool permissions, and persona.
+  </Card>
+</CardGroup>

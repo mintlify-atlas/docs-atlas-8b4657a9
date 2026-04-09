@@ -1,0 +1,106 @@
+{
+  "projectType": "general",
+  "projectName": "Hermes Agent: The Complete Guide",
+  "projectDescription": "A free, practical guide to Hermes Agent — the open-source AI Agent framework by Nous Research — covering concepts, core mechanisms, hands-on setup, real-world scenarios, and deep thinking across 17 chapters.",
+  "theme": "almond",
+  "primaryColor": "#909090",
+  "lightColor": "#222222",
+  "darkColor": "#cacaca",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "The Book",
+        "groups": [
+          {
+            "group": "Introduction",
+            "pages": [
+              "introduction",
+              "what-is-hermes",
+              "download"
+            ]
+          },
+          {
+            "group": "Part 1: Concepts",
+            "pages": [
+              "concepts/from-harness-to-hermes",
+              "concepts/eliminating-anxiety"
+            ]
+          },
+          {
+            "group": "Part 2: Core Mechanisms",
+            "pages": [
+              "core/learning-loop",
+              "core/memory-system",
+              "core/skills",
+              "core/tool-ecosystem"
+            ]
+          },
+          {
+            "group": "Part 3: Hands-On Setup",
+            "pages": [
+              "setup/installation",
+              "setup/first-conversation",
+              "setup/multi-platform",
+              "setup/customization"
+            ]
+          },
+          {
+            "group": "Part 4: Real-World Scenarios",
+            "pages": [
+              "scenarios/knowledge-assistant",
+              "scenarios/dev-automation",
+              "scenarios/content-creation",
+              "scenarios/multi-agent"
+            ]
+          },
+          {
+            "group": "Part 5: Deep Thinking",
+            "pages": [
+              "deep/comparison",
+              "deep/self-improving-boundaries"
+            ]
+          },
+          {
+            "group": "About",
+            "pages": [
+              "about/author",
+              "about/orange-book-series"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "17-chapter comprehensive guide across 5 structured parts",
+    "Covers Hermes Agent's self-improving learning loop",
+    "Explains three-layer memory system architecture",
+    "Details automatic Skill creation and evolution mechanism",
+    "Hands-on setup and multi-platform deployment",
+    "Real-world scenario walkthroughs (knowledge assistant, dev automation, multi-agent)",
+    "Deep comparison with Claude Code and OpenClaw",
+    "Available in both English and Chinese (PDF downloads)",
+    "CC BY-NC-SA 4.0 licensed — free to share and adapt"
+  ],
+  "publicApiSurface": [
+    "PDF Download (English): Hermes-Agent-The-Complete-Guide-v260407.pdf",
+    "PDF Download (Chinese): Hermes-Agent-从入门到精通-v260407.pdf",
+    "§01 From Harness to Hermes",
+    "§02 Eliminating Anxiety",
+    "§03 Learning Loop",
+    "§04 Memory System",
+    "§05 Skills",
+    "§06 Tool Ecosystem",
+    "§07 Installation",
+    "§08 First Conversation",
+    "§09 Multi-Platform",
+    "§10 Customization",
+    "§11 Advanced Configuration",
+    "§12 Knowledge Assistant",
+    "§13 Dev Automation",
+    "§14 Content Creation",
+    "§15 Multi-Agent Orchestration",
+    "§16 Three-Way Comparison (Hermes vs Claude Code vs OpenClaw)",
+    "§17 Boundaries of Self-Improving Agents"
+  ]
+}

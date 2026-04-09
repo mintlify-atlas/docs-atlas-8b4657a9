@@ -1,0 +1,172 @@
+---
+title: "§16. Hermes vs. Claude Code vs. OpenClaw"
+description: "A deep comparison of three AI coding agents: their origins, philosophies, strengths, and the right tool for each job."
+sidebarTitle: "§16. Three-way comparison"
+keywords: ["hermes agent", "claude code", "openclaw", "comparison", "ai agents"]
+---
+
+The AI agent landscape grew crowded fast. By early 2026, three names came up in nearly every conversation about autonomous coding agents: **Claude Code** (Anthropic), **OpenClaw** (open-source community), and **Hermes Agent** (Nous Research). They all let you have a conversation with a model and get code, answers, and actions back. But underneath that surface similarity, they represent three fundamentally different answers to the same question: *what should an AI agent be?*
+
+This chapter maps out those differences so you can make an informed choice — not just once, but every time the right tool changes.
+
+---
+
+## Origins and philosophy
+
+<Tabs>
+  <Tab title="Claude Code">
+    **Origin**: Released by Anthropic in 2025 as a first-party CLI agent built directly on Claude models.
+
+    **Philosophy**: Claude Code is built on a simple premise — that the best coding agent is one that brings the most capable model as close to your terminal as possible, with the least friction. Anthropic's bet is that raw model quality wins. If the underlying model is good enough, the scaffolding around it can stay minimal.
+
+    Claude Code is **stateless by design**. Each session starts fresh. There is no memory of last week's codebase discussion, no accumulated understanding of your working style, and no evolving skill set. This is a deliberate choice: it keeps the system predictable, auditable, and safe. What you see is what you get, every time.
+
+    **Target users**: Developers who want state-of-the-art code generation with zero infrastructure overhead. Teams that value predictability and reproducibility over personalization. Anyone who just wants to open a terminal and get something done.
+  </Tab>
+  <Tab title="OpenClaw">
+    **Origin**: An open-source agent framework that emerged from the developer community as a more extensible, hackable alternative to proprietary agents.
+
+    **Philosophy**: OpenClaw's philosophy is modularity and extensibility. It treats the agent as a platform — a composable runtime where you wire together the tools, models, and behaviors you want. The community-driven development model means it moves fast, iterates on user feedback, and supports a wide range of model backends.
+
+    OpenClaw is designed to be **configurable from the ground up**. You choose your model, define your tool set, write your system prompts, and compose workflows. This flexibility is its greatest strength and, for some users, its greatest friction: you get exactly what you configure, which means you need to know what to configure.
+
+    **Target users**: Engineers who want deep control over their agent's behavior. Teams integrating agents into custom pipelines. Developers who are comfortable reading source code to understand what their tool is doing.
+  </Tab>
+  <Tab title="Hermes Agent">
+    **Origin**: Released by Nous Research in February 2026 as an open-source AI Agent framework built around a self-improving learning loop.
+
+    **Philosophy**: Hermes Agent starts from a different premise entirely. Rather than optimizing for the best single session, it optimizes for the best *relationship over time*. Nous Research's thesis is that an agent which gets better through use will eventually outperform any stateless agent, regardless of the underlying model's raw capability.
+
+    Hermes is the first production agent built on the five Harness Engineering components — instructions, constraints, feedback, memory, and orchestration — as a unified architecture. It does not just respond to your prompts; it observes patterns in your work, builds Skills from repeated tasks, and refines its understanding of your context continuously.
+
+    **Target users**: Individuals building a personal AI Agent for long-term use. Teams running complex, recurring workflows where context accumulates. Anyone who has read the Harness Engineering 橙皮书 and wants to see those concepts running in production.
+  </Tab>
+</Tabs>
+
+---
+
+## Detailed capability profiles
+
+<Tabs>
+  <Tab title="Claude Code">
+    ### Strengths
+
+    - **Code generation quality**: Claude Code runs on Anthropic's frontier models. For pure, single-shot code generation tasks — writing a function, explaining a codebase, debugging an error — it remains one of the strongest options available.
+    - **Deep model integration**: Because Anthropic controls both the model and the agent, optimizations happen at every layer. Tool use, context management, and safety filters are tuned together rather than bolted on separately.
+    - **Minimal setup**: A single `npm install` and you are running. No configuration files, no memory systems to initialize, no Skills to define. The low activation energy means you can reach for it immediately.
+    - **Predictability**: Every session behaves consistently. If you need reproducible outputs for testing or auditing, the stateless design is a feature, not a limitation.
+
+    ### Approach
+
+    Claude Code operates in discrete sessions. You invoke it, work through a problem, and the session ends. Context is maintained within the session via the conversation window. When you start a new session, you start fresh — you may manually re-supply context, but the agent has no way to retrieve it automatically.
+
+    ### Limitations
+
+    - **No persistent memory**: Claude Code does not remember your codebase, your style preferences, or your past decisions across sessions. Each time you start a new conversation, you re-establish context from scratch.
+    - **No self-improvement**: The agent does not learn from your feedback. Corrections and refinements you make within a session disappear when the session ends. There is no mechanism for the agent to internalize that a certain approach works better for your projects.
+    - **Limited customization**: Beyond system prompt configuration, there is little room to extend Claude Code's behavior without building your own wrapper.
+
+    <Note>
+      Claude Code's stateless design is not a flaw — it is a deliberate architectural choice that prioritizes safety and predictability. For many use cases, this is exactly what you want.
+    </Note>
+  </Tab>
+  <Tab title="OpenClaw">
+    ### Strengths
+
+    - **Maximum configurability**: OpenClaw exposes every layer of the agent stack to configuration. You can swap models mid-workflow, define custom tools, write fine-grained system prompts, and compose multi-step pipelines with full visibility into each step.
+    - **Model-agnostic**: Unlike agents tied to a specific provider, OpenClaw works with any model that exposes a compatible API — including local models. This matters for teams with data residency requirements or cost constraints.
+    - **Active open-source ecosystem**: Community-built extensions, integrations, and workflow templates are actively maintained. If you need an integration that does not exist, you can build and contribute it.
+    - **Transparency**: Because the codebase is open, you can audit exactly what the agent is doing at every step. For security-sensitive environments, this is significant.
+
+    ### Approach
+
+    OpenClaw is best understood as an **agent runtime** rather than a finished agent. You assemble the pieces you need: choose a model, configure tools, define the system prompt, and wire up any integrations. The framework handles orchestration, but the intelligence of the agent is largely in what you configure.
+
+    This makes OpenClaw powerful for teams that have already done the thinking about what their agent should do and want a solid, extensible platform to build on.
+
+    ### Limitations
+
+    - **High configuration overhead**: The flexibility that makes OpenClaw powerful also creates friction. Getting a well-behaved agent up and running requires meaningful configuration work upfront.
+    - **No built-in learning loop**: Like Claude Code, OpenClaw is stateless by default. Persistent memory and learning behaviors require you to implement them yourself using the framework's extension points.
+    - **Steeper learning curve**: Understanding how to configure OpenClaw well requires understanding how agents work. It rewards expert users more than it helps beginners.
+
+    <Note>
+      OpenClaw shines brightest when you have a specific, well-defined workflow you want to automate and you want full control over every aspect of how it runs.
+    </Note>
+  </Tab>
+  <Tab title="Hermes Agent">
+    ### Strengths
+
+    - **Self-improving learning loop**: Hermes observes patterns in your interactions and refines its behavior over time. Tasks you perform repeatedly become Skills — reusable, evolving procedures the agent can invoke automatically.
+    - **Three-layer memory system**: Hermes maintains memory at three levels — episodic (what happened in past sessions), semantic (facts about your projects and preferences), and procedural (how to do things you've taught it). This gives it context that no single-session agent can match.
+    - **Automatic Skill creation**: When Hermes identifies a repeated pattern in your work, it can synthesize a Skill — a structured procedure that captures the steps involved. Skills improve with each execution, making recurring workflows progressively more reliable.
+    - **Open-source**: The full codebase is public under a permissive license. You can inspect, modify, and extend every component.
+
+    ### Approach
+
+    Hermes treats every interaction as both a task to complete and a learning opportunity. After completing a task, it updates its memory, refines relevant Skills, and adjusts its model of your working style. The result is an agent that accumulates competence — not just in the abstract, but specifically for your context.
+
+    This approach is most valuable over time. On day one, Hermes and Claude Code may feel similar. On day 90, after Hermes has built up a rich picture of your codebase, preferences, and recurring workflows, the difference becomes significant.
+
+    ### Limitations
+
+    - **Newer and less battle-tested**: As of v0.7.0, Hermes is a young project. Edge cases exist. Some workflows that work flawlessly in Claude Code may require configuration work in Hermes.
+    - **Requires setup**: The memory and Skills systems require initialization and ongoing hygiene. You will occasionally need to review and prune what Hermes has learned.
+    - **Learning curve for the learning system itself**: Understanding how to work *with* a self-improving agent — how to give feedback that the learning loop will use well — is a skill in itself. This guide is partly written to address that gap.
+
+    <Warning>
+      The self-improving loop is powerful, but it requires attention. An agent that learns unchecked can develop bad habits. See §17 for a detailed treatment of how to manage this.
+    </Warning>
+  </Tab>
+</Tabs>
+
+---
+
+## Side-by-side comparison
+
+| Dimension | Claude Code | OpenClaw | Hermes Agent |
+|---|---|---|---|
+| **Persistent memory** | None (session-scoped) | None by default (extensible) | Three-layer: episodic, semantic, procedural |
+| **Self-improvement** | None | None by default | Built-in learning loop |
+| **Skill / workflow automation** | None | Manual pipeline definition | Automatic Skill creation and evolution |
+| **Tool use** | Built-in tool set | Fully configurable | Built-in + extensible |
+| **Customization** | Limited | Extensive (configuration) | Extensive (memory + Skills) |
+| **Model support** | Claude models only | Model-agnostic | Model-agnostic |
+| **Open-source** | No | Yes | Yes |
+| **Setup complexity** | Minimal | Moderate to high | Moderate |
+| **Best session** | Excellent | Good (model-dependent) | Good, improves over time |
+| **Best after 90 days of use** | Unchanged | Unchanged | Significantly improved |
+
+---
+
+## When to choose each agent
+
+<CardGroup cols={3}>
+  <Card title="Choose Claude Code when..." icon="bolt">
+    You want the best raw coding ability with minimal setup. You value predictability and reproducibility. You work in short, discrete sessions where each task is self-contained. You are already on Anthropic's ecosystem and want tight model integration. Setup time is not available.
+  </Card>
+  <Card title="Choose OpenClaw when..." icon="sliders">
+    You have a well-defined workflow you want full control over. You need model flexibility — local models, multiple providers, or specific cost constraints. You are comfortable with configuration work and want to audit every step of what your agent does. You are building an agent-powered product rather than using an agent personally.
+  </Card>
+  <Card title="Choose Hermes when..." icon="brain">
+    You want an agent that improves over time and handles complex, recurring workflows. You are building a long-term personal AI Agent. Your work involves repeating patterns that are worth automating. You are willing to invest in teaching the agent your context and prefer compounding returns on that investment.
+  </Card>
+</CardGroup>
+
+---
+
+## The philosophical difference: tools vs. partners
+
+Beneath the technical comparison lies a more fundamental question about what we want from AI agents.
+
+Claude Code and OpenClaw — despite their differences from each other — share a common model of the relationship between human and agent: **you are the user, it is the tool**. You come to the tool with a task, the tool executes, the tool is put down. This model is clean, predictable, and fits comfortably into existing software development workflows. It requires nothing from you except knowing what you want.
+
+Hermes represents a different model: **the agent as a partner that accumulates context**. This model asks more of you. You need to think about what you want the agent to learn. You need to review what it has learned. You need to give feedback that goes into the learning loop intentionally. In return, you get an agent whose competence in your specific domain grows with your use.
+
+Neither model is universally better. The tool model works well when tasks are varied, unpredictable, or require the highest possible single-shot quality. The partner model works well when your work has recurring structure, when context accumulates, and when you are willing to invest in the relationship.
+
+<Note>
+  Most experienced Hermes users reach for Claude Code for one-off exploratory tasks and use Hermes for the recurring, high-context work where memory and Skills provide a real advantage. The two tools are not in competition — they occupy different parts of the workflow.
+</Note>
+
+The deeper question — which this book cannot answer for you — is what kind of relationship with AI you are building toward. A world of powerful, stateless tools is one answer. A world of agents that genuinely know your work is another. Hermes is a bet on the second answer.

@@ -1,0 +1,168 @@
+---
+title: "§02 Eliminating Anxiety"
+sidebarTitle: "§02 Eliminating Anxiety"
+description: "Common anxieties developers have about autonomous AI agents — and how Hermes's built-in constraints, feedback mechanisms, and controllable defaults address each one."
+keywords: ["agent safety", "constraints", "control", "trust", "autonomous agents", "self-improving agents"]
+---
+
+Autonomous agents make developers nervous. That's not irrational — it's earned. Anyone who's watched a coding agent confidently delete the wrong files, loop forever on a broken plan, or "fix" a bug by deleting the test that caught it has good reasons to be cautious.
+
+Hermes was designed with these anxieties in mind. Not to dismiss them — they're valid — but to take them seriously enough to engineer against them. This chapter addresses the most common concerns directly, explains the mechanisms Hermes uses to resolve them, and describes the mindset shift that makes working with self-improving agents productive rather than stressful.
+
+## The reins metaphor
+
+The tagline for Hermes is: *the first Agent that ships with reins built in — and the reins keep growing.*
+
+A rein doesn't stop a horse. It gives the rider influence over direction and pace without eliminating the horse's ability to move. The goal is not maximum restriction — it's meaningful control.
+
+Hermes's constraint system works the same way. It doesn't hobble the agent's capability. It gives you a reliable channel of influence that persists as the agent becomes more powerful. The reins grow because the harness learns: as Hermes develops new Skills and refines its behavior, the constraint layer keeps pace, ensuring that increased capability doesn't mean decreased controllability.
+
+<Info>
+  Hermes is designed to be controllable by default. Constraints are enforced at the framework level — not as suggestions in a system prompt that the model might reason around, but as hard boundaries the framework itself upholds.
+</Info>
+
+## Common anxieties — and how Hermes addresses them
+
+<AccordionGroup>
+  <Accordion title="Will it do things I didn't ask for? — Unexpected actions" icon="triangle-exclamation">
+    **The concern**: autonomous agents have a reputation for going off-script. You ask for a small change and it refactors three files. You ask it to fix a bug and it rewrites the test suite. The agent is technically trying to help — but it's doing things you didn't want, without asking.
+
+    **Why this happens with other tools**: most agents have no explicit mechanism for distinguishing between "core task" and "things that seem related." The model reasons about what would be helpful, and its definition of helpful may be broader than yours.
+
+    **How Hermes addresses it**:
+
+    Hermes's constraint layer includes a built-in principle of minimal footprint: the agent should accomplish the stated task without expanding scope unless explicitly told to. This is not a prompt instruction — it's a framework-level constraint that applies to every action the agent considers taking.
+
+    When the agent identifies something that seems like it should be fixed but wasn't requested, it surfaces this as an observation rather than acting on it. You stay informed without losing control of scope.
+
+    Additionally, Hermes's Skills — reusable action sequences — are explicit and reviewable. You can see exactly what a Skill does before it runs, and you can reject or modify Skills that overstep.
+
+    <Tip>
+      Start with a narrow task scope and expand it deliberately. Hermes is designed to do exactly what you ask and flag anything it notices beyond that scope — not to take initiative on your behalf until you've established that you want it to.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="How do I control what it learns? — The learning loop" icon="rotate">
+    **The concern**: self-improving agents learn from experience — but what if they learn the wrong things? What if a bad run teaches the agent bad habits? What if it "learns" a workaround that breaks something later?
+
+    **Why this is a real risk**: learning systems that operate without oversight can drift. If the feedback signal is noisy or the agent generalizes incorrectly, improvements can compound into problems.
+
+    **How Hermes addresses it**:
+
+    Hermes's learning loop is not autonomous — it's collaborative. When the agent identifies a candidate update to a Skill or to its instructions, it doesn't apply the update silently. It proposes the change and waits for your review.
+
+    This means you have a clear checkpoint: every learning event is visible and requires your approval before it becomes part of the agent's permanent knowledge. You can accept, reject, or modify proposed updates.
+
+    The learning loop is also scoped. It operates on Skills and instructions — not on constraints. Constraints remain stable by design. The agent can learn to do more, but it cannot learn to remove its own guardrails.
+
+    For a detailed look at how the learning loop works, see [§03 The Learning Loop](/core/learning-loop).
+
+    <Note>
+      You can also run Hermes in a mode where the learning loop is fully manual — no automatic proposals, only explicit updates you initiate yourself. This is useful when you're first getting started and want full visibility before trusting the automated process.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Will it break things? — Destructive actions" icon="bomb">
+    **The concern**: agents that can write files, run commands, and interact with external systems can cause real damage. A delete that shouldn't have happened. A commit to the wrong branch. An API call that triggers a billing event. Once done, some of these actions are hard or impossible to undo.
+
+    **Why this is the most serious concern**: unlike a bad suggestion in a chat, a bad action can have consequences in the real world. The asymmetry between "easy to do" and "hard to undo" is exactly what makes autonomous agents risky.
+
+    **How Hermes addresses it**:
+
+    Hermes classifies actions by reversibility. Actions that are easily reversible (reading a file, writing a draft, running tests) are allowed by default. Actions that are destructive or hard to reverse (deleting files, making network requests, modifying system configuration) require explicit confirmation.
+
+    This classification is configurable — you can mark specific actions as always-allowed for your workflow, or add additional confirmation requirements for actions you're particularly sensitive about.
+
+    Hermes also maintains an action log: a record of everything the agent has done in a session. If something goes wrong, you have a complete trace of what happened and in what order, which makes diagnosis and recovery dramatically easier.
+
+    <Warning>
+      Even with Hermes's safety mechanisms, it's good practice to use version control and maintain backups when running the agent on important files. Hermes reduces the risk of destructive actions — it doesn't eliminate it entirely.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Can I trust its memory? — Persistence and accuracy" icon="database">
+    **The concern**: an agent that remembers things across sessions sounds useful — until it remembers something wrong. A misremembered preference. A Skill built on an incorrect assumption. Context from an old project leaking into a new one.
+
+    **Why this matters**: memory systems introduce a new failure mode. Errors don't just affect the current session — they can persist and compound. A wrong assumption encoded in memory becomes a recurring source of bad behavior.
+
+    **How Hermes addresses it**:
+
+    Hermes's three-layer memory system is designed with inspectability as a first principle. You can read and edit the agent's memory directly — it's not a black box. `HERMES.md`, the primary instruction and preference file, is a plain text file in your project. Skills are stored in a readable format. External memory entries can be reviewed and deleted.
+
+    The agent does not silently update memory. All memory modifications are logged, and significant updates — like creating a new Skill or revising an existing instruction — surface as proposals for your review.
+
+    Memory is also scoped to context. Project-specific memory doesn't bleed into other projects. User-level preferences are clearly separated from project-level knowledge. You always know where a piece of memory came from.
+
+    For a full explanation of the memory architecture, see [§04 The Memory System](/core/memory-system).
+
+    <Tip>
+      Periodically review your `HERMES.md` file and Skill library. Think of it as reviewing your agent's current state of knowledge. The more familiar you are with what it knows, the more confidently you can predict how it will behave.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="How do I know what it's doing? — Observability" icon="eye">
+    **The concern**: agents that operate autonomously are, by definition, doing things you're not directly supervising. If you can't see what they're doing, you can't catch problems early, and you can't learn from what they do well.
+
+    **Why opacity is dangerous**: an agent that produces outputs you can't trace is an agent you can't improve or correct. Even if the outputs are good, you've lost the ability to understand why — which means you can't generalize the lesson.
+
+    **How Hermes addresses it**:
+
+    Hermes is built for observability. Every action the agent takes is logged with its reasoning: what the agent was trying to accomplish, what tool or Skill it chose, and what the outcome was. You can review this log at any granularity — per-session, per-task, or per-action.
+
+    The agent also narrates its reasoning during execution. Rather than producing a result and presenting it as a fait accompli, Hermes explains what it's doing and why at each step. This makes it easy to spot misunderstandings early, before the agent has acted on them.
+
+    Proposed Skill updates and instruction changes come with an explanation: what pattern the agent observed, why it thinks the update would be an improvement, and what the change would look like. You're never asked to approve something you don't understand.
+
+    <Info>
+      Observability is not just about catching problems — it's about building trust. The more you can see what Hermes is doing and why, the more confidently you can expand the scope of what you delegate to it.
+    </Info>
+  </Accordion>
+</AccordionGroup>
+
+## Practical mindset shifts
+
+Working with a self-improving agent requires adjusting some habits developed with simpler tools. These shifts aren't about trusting the agent blindly — they're about working with it effectively.
+
+**Review proposals, don't micromanage execution.** Hermes is designed to handle the details of task execution autonomously. Your role is to review the decisions that matter: proposed Skill changes, flagged scope expansions, actions requiring confirmation. Trying to supervise every step defeats the purpose and makes the agent less useful.
+
+**Treat the harness as a shared workspace.** Your `HERMES.md` file and Skill library aren't just configuration — they're the accumulated result of working together. Review them periodically. Update them when your needs change. Think of them as a living document that represents what you and the agent have figured out together.
+
+**Start narrow, expand deliberately.** Don't try to give Hermes full autonomy on day one. Start with well-defined tasks where the scope is clear and the stakes are low. As you develop confidence in how it behaves, expand what you delegate. The reins don't need to be loose from the start — they can grow as trust does.
+
+**Use the action log when things go wrong.** When the agent does something unexpected, the first question is: what did it think it was doing? The action log with reasoning traces gives you the answer. Diagnose from there, rather than starting with assumptions about what went wrong.
+
+<Note>
+  Anxiety about agents usually peaks early in the relationship, before you've developed a feel for how Hermes behaves and what its failure modes look like. Most developers who start cautiously find that their comfort level increases significantly after the first few sessions — not because the risks disappear, but because they become predictable and manageable.
+</Note>
+
+## Who should use Hermes
+
+Hermes is not the right tool for every situation. It's most valuable — and most appropriate — for developers who want the power of a capable autonomous agent but aren't willing to sacrifice control to get it.
+
+<CardGroup cols={2}>
+  <Card title="Developers moving beyond Claude Code or OpenClaw" icon="arrow-up-right">
+    If you've used Claude Code or OpenClaw and found yourself wanting more persistence, better memory, or more structured control over agent behavior — Hermes is the next step.
+  </Card>
+  <Card title="Teams with strong safety requirements" icon="shield">
+    Hermes's explicit constraint layer and action confirmation system make it appropriate for environments where unreviewed destructive actions are not acceptable.
+  </Card>
+  <Card title="Developers building long-running workflows" icon="arrows-rotate">
+    The self-improving learning loop and memory system make Hermes much more effective over time than tools that reset with every session. Workflows that run repeatedly benefit the most.
+  </Card>
+  <Card title="Anyone serious about Harness Engineering" icon="book">
+    If you've read the *Harness Engineering* 橙皮书 and want to see the concepts running as a real product — Hermes is where those ideas live.
+  </Card>
+</CardGroup>
+
+## What comes next
+
+Chapter §02 closes out the Concepts section. From here, the book moves into the core mechanisms that make Hermes work: the learning loop that drives self-improvement, the memory system that gives it persistence, the Skill system that makes it increasingly capable, and the tool ecosystem it can draw on.
+
+<CardGroup cols={2}>
+  <Card title="§03 The Learning Loop" icon="rotate" href="/core/learning-loop">
+    How Hermes learns from feedback and proposes improvements over time
+  </Card>
+  <Card title="§04 The Memory System" icon="database" href="/core/memory-system">
+    The three-layer architecture that keeps Hermes informed across sessions
+  </Card>
+</CardGroup>

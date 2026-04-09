@@ -1,0 +1,127 @@
+---
+title: "§03. The self-improving learning loop"
+sidebarTitle: "Learning loop"
+description: "How Hermes observes what it does, reflects on the outcome, and updates its behavior — getting more capable with every session."
+keywords: ["learning loop", "self-improving", "feedback cycle", "reflection", "agent behavior"]
+---
+
+Most AI agents are static. Give them the same task twice and they respond the same way — no memory of what worked, no adjustment for what didn't. Hermes is different. Its **self-improving learning loop** is the mechanism that makes the agent measurably better the more you use it.
+
+This chapter explains how the loop works, why it matters, and how it connects to the rest of Hermes's architecture.
+
+## What is the self-improving learning loop?
+
+The learning loop is a continuous cycle that runs after every meaningful interaction. Hermes doesn't just execute tasks — it watches itself execute them. It records what happened, evaluates the outcome, and updates its internal models of how to behave.
+
+The result is an agent that accumulates operational knowledge over time. Early sessions feel like working with a capable but generic assistant. After weeks of real use, Hermes has learned your preferences, your project structure, your terminology, and the kinds of mistakes to avoid with your specific setup.
+
+<Note>
+  The learning loop operates on *behavioral patterns*, not raw conversation transcripts. Hermes distills observations into structured updates — it doesn't simply replay past conversations to inform future ones.
+</Note>
+
+## How Hermes observes task outcomes
+
+Every task Hermes runs produces an observable outcome: a file was written, a test passed or failed, a command returned an error, you accepted or rejected a suggestion. Hermes captures these signals as **outcome observations** at the end of each task execution.
+
+Observations fall into three categories:
+
+- **Explicit signals** — You accepted, rejected, edited, or re-ran something Hermes produced. These are the strongest signals.
+- **Implicit signals** — The environment responded in a predictable or unexpected way (a build succeeded, a test suite regressed, an API call returned a 4xx error).
+- **Null signals** — Nothing happened, which is itself informative (a generated file was never opened, a suggestion was ignored).
+
+Hermes weights explicit signals most heavily. Implicit signals inform tool usage patterns. Null signals trigger gradual decay of low-confidence beliefs.
+
+## The feedback cycle
+
+The core loop runs in four stages after every task:
+
+<Steps>
+  <Step title="Action">
+    Hermes executes a task using whatever combination of tools, reasoning, and retrieved memory is appropriate. This produces an artifact: code, a response, a sequence of tool calls, or a decision.
+  </Step>
+  <Step title="Observation">
+    Hermes records what happened. It logs the task type, the approach taken, the tools used, the duration, and the environmental response. If you interacted with the output — editing it, running it, discarding it — that interaction is also recorded.
+  </Step>
+  <Step title="Reflection">
+    Hermes runs a lightweight internal review of the observation against its current behavioral models. It asks: did the approach match the context? Was the tool selection efficient? Did the output require correction? Were there signals of preference that weren't previously captured?
+  </Step>
+  <Step title="Update">
+    Based on the reflection, Hermes writes updates to the appropriate memory layer. A successful approach reinforces an existing pattern or creates a new one. A failure updates a constraint. A preference signal refines a Style parameter in your personal profile.
+  </Step>
+</Steps>
+
+This cycle runs automatically. You don't configure it, trigger it, or review it in real time. It happens in the background as a natural part of every session.
+
+<Note>
+  The reflection and update steps are designed to be low-latency — they don't add perceptible delay to your interactions. Hermes batches heavier reflection work and runs it asynchronously at session end.
+</Note>
+
+## How this differs from static prompt-based agents
+
+Static agents — including most coding assistants available today — rely entirely on what's in the system prompt and the current conversation window. If you want them to remember something, you must tell them every time. If they make a mistake, they'll make it again next session unless you correct the system prompt manually.
+
+Hermes breaks this pattern in two ways:
+
+**Persistent behavioral memory.** Instead of relying on a fixed system prompt, Hermes maintains a dynamic internal state that evolves with use. Your preferences, your project conventions, and your correction history are stored and retrieved automatically.
+
+**Automatic pattern extraction.** When Hermes notices you repeatedly ask for the same kind of task — restructuring a specific type of file, generating tests in a specific format, summarizing documents with a specific structure — it doesn't wait for you to write an instruction. It creates a [Skill](/core/skills) and starts using it proactively.
+
+The difference compounds over time. A static agent at month six is identical to a static agent at day one. A Hermes agent at month six has accumulated hundreds of behavioral updates and a library of task-specific Skills.
+
+## Why this is a breakthrough
+
+Self-improvement in AI agents has been discussed theoretically for years. What makes Hermes's implementation notable is that it is **grounded, bounded, and observable**:
+
+- **Grounded** — Updates are tied to real task outcomes, not abstract self-assessment. The agent improves based on evidence, not speculation.
+- **Bounded** — The learning loop doesn't allow arbitrary self-modification. It updates behavioral parameters within a constrained schema. The agent cannot rewrite its own core instructions or override safety constraints.
+- **Observable** — You can inspect what Hermes has learned at any time. The memory system surfaces the agent's current behavioral models in readable form.
+
+This is the "reins built in" principle from the introduction — the agent gets more capable, but the mechanism of improvement remains under your control.
+
+## What changes between sessions, what persists
+
+Not everything Hermes learns persists indefinitely. The memory system uses three layers with different retention characteristics:
+
+| What changes | Retention |
+|---|---|
+| Working context (current task state) | Cleared at session end |
+| Episode records (what happened in past sessions) | Persisted, subject to capacity limits |
+| Learned preferences and behavioral patterns | Persisted indefinitely unless you clear them |
+| Skill definitions | Persisted and versioned |
+| Safety constraints | Never modified by the learning loop |
+
+<Warning>
+  Hermes does not modify its own safety constraints through the learning loop. Constraints are set at configuration time and can only be changed by you explicitly. The loop updates behavioral patterns — how Hermes works — not what it's permitted to do.
+</Warning>
+
+Between sessions, Hermes carries forward:
+
+- Your documented preferences (response style, code conventions, terminology)
+- Skills it has created from your recurring task patterns
+- Episode summaries from past sessions that are relevant to new tasks
+- Calibrated estimates of tool reliability in your environment
+
+What it doesn't carry forward between sessions is the live conversation context — the specific exchanges, intermediate reasoning, and working memory of the current session. That is cleared at session end and rebuilt from the persistent layers when the next session starts.
+
+## How the learning loop connects to memory and Skills
+
+The learning loop is the engine. [Memory](/core/memory-system) and [Skills](/core/skills) are where its output lives.
+
+When the reflection stage identifies a preference signal, it writes to **semantic memory** — the layer that stores distilled facts about you and your work. When it identifies an episode worth retaining, it writes a summary to **episodic memory**. When it detects a recurring task pattern, it proposes the creation of a new **Skill**.
+
+This means the learning loop, memory, and Skills are not three independent systems — they are one integrated mechanism. The loop drives continuous improvement; memory stores what's been learned; Skills make that learning actionable.
+
+```
+Session ends
+    │
+    ▼
+Reflection stage runs
+    │
+    ├──► Preference signal detected ──► Write to semantic memory
+    │
+    ├──► Notable episode ─────────────► Write to episodic memory
+    │
+    └──► Recurring task pattern ──────► Propose new Skill
+```
+
+The next chapter covers the memory system in detail — how each layer works, how memories are stored and retrieved, and how to inspect and manage what Hermes knows about you.

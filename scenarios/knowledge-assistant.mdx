@@ -1,0 +1,203 @@
+---
+title: '§12. Personal knowledge assistant'
+description: 'Build a persistent second brain with Hermes — ingest documents, ask questions, and let your knowledge base grow smarter over time.'
+sidebarTitle: '§12. Knowledge assistant'
+keywords: ['knowledge base', 'second brain', 'document ingestion', 'research', 'memory', 'PDF', 'notes']
+---
+
+# §12. Using Hermes as a personal knowledge assistant
+
+Most knowledge work suffers from the same problem: you read something interesting, take a note or bookmark it, and never find it again when you actually need it. Hermes solves this by acting as a persistent research partner — one that remembers everything you feed it and gets better at surfacing the right information the longer you work together.
+
+This chapter covers how to build that system from scratch.
+
+## The use case
+
+A personal knowledge base powered by Hermes is more than a searchable archive. Because Hermes maintains a three-layer memory system (working memory, episodic memory, and long-term semantic memory), it builds a genuine understanding of your interests and reasoning patterns over time.
+
+When you ask a question weeks after ingesting a paper, Hermes doesn't just keyword-match — it draws on the accumulated context of everything you've discussed, related materials you've shared, and the reasoning threads you've developed together.
+
+<Tip>
+  The quality of your knowledge base scales with consistency. Hermes improves fastest when you feed it material regularly rather than in occasional large batches.
+</Tip>
+
+## Ingesting documents
+
+Hermes can ingest content from a range of sources. You can attach files directly in the chat interface or provide URLs for Hermes to fetch and process.
+
+**Supported input types:**
+
+- **PDFs** — research papers, books, reports, exported notes
+- **Plain text and Markdown** — personal notes, journal entries, outlines
+- **Web pages** — articles, documentation, blog posts (paste the URL)
+- **Images of text** — scanned documents, whiteboard photos
+- **Structured data** — CSV files, spreadsheets with research data
+
+To ingest a document, simply attach it or link it in the conversation and give Hermes a brief context prompt:
+
+```text Example ingestion prompt
+Here's a paper on retrieval-augmented generation I want to keep for reference.
+The main claim is that RAG outperforms fine-tuning for knowledge-intensive tasks.
+Add it to my AI research knowledge base.
+```
+
+Hermes will confirm ingestion, summarize what it stored, and tag the material with relevant topics based on your existing knowledge graph.
+
+## Asking questions over your knowledge base
+
+Once you've built up a body of ingested material, you can query it in natural language. Hermes understands the difference between asking for a specific fact and asking for a synthesis across multiple sources.
+
+**Types of queries Hermes handles well:**
+
+| Query type | Example |
+|---|---|
+| Factual lookup | "What did that RAG paper say about benchmark datasets?" |
+| Comparison | "How does the Anthropic approach to constitutional AI differ from OpenAI's RLHF work?" |
+| Synthesis | "Summarize the key debates in my AI safety reading from the last two months" |
+| Connection-finding | "Is there anything in my notes that connects to this new paper I'm reading?" |
+| Gap identification | "What areas of distributed systems am I weakest on based on my reading?" |
+
+## How Hermes's memory enhances retrieval over time
+
+The first time you ask Hermes a question, it works purely from what you've ingested. But as you continue working together, three things happen:
+
+1. **Episodic memory** records which queries you asked, what answers were useful, and where your thinking developed — so future responses build on past reasoning rather than starting fresh.
+
+2. **Semantic memory** creates a persistent graph of concepts across all your ingested material, linking ideas that span different documents even when the sources never explicitly reference each other.
+
+3. **Skills develop** for your specific knowledge domains. After enough interactions about, say, machine learning research, Hermes builds a Skill that encodes your preferred level of technical depth, the frameworks you use to evaluate papers, and the questions you tend to ask — so it can anticipate what you need before you articulate it.
+
+<Note>
+  Memory accumulation is opt-in at the session level. If you want to explore a topic without it influencing your long-term knowledge base, start a session with "keep this conversation outside my knowledge base."
+</Note>
+
+## Building a second brain: Hermes as a persistent research partner
+
+The "second brain" framing, popularized by Tiago Forte's work, describes an external system that holds your knowledge so your biological brain is free to think rather than remember. Hermes operationalizes this idea with a conversational interface instead of a rigid folder structure.
+
+The practical difference: instead of filing a paper in `Projects/AI/RAG/2026/`, you hand it to Hermes with a sentence of context and trust it to surface the material when relevant. The retrieval is driven by your questions, not your organizational scheme.
+
+This also means Hermes's knowledge base is **queryable by meaning**, not by hierarchy. You don't have to remember where you filed something — you just describe what you're looking for.
+
+## Example workflow: daily reading to on-demand recall
+
+Here's a realistic weekly workflow for a researcher using Hermes as their knowledge assistant.
+
+<Steps>
+  <Step title="Morning read and ingest">
+    Open your reading queue (RSS reader, Pocket, email newsletter). For each article or paper worth keeping, paste the URL or attach the PDF to Hermes with a one-sentence context note.
+
+    ```text
+    Ingesting this article on transformer attention mechanisms.
+    I'm interested in the efficiency angle — this relates to my work on inference cost.
+    ```
+  </Step>
+  <Step title="Evening synthesis">
+    At the end of the day, ask Hermes to synthesize what you ingested:
+
+    ```text
+    What were the most important ideas from what I shared today?
+    Any connections to things I've read before?
+    ```
+
+    Hermes surfaces links between today's material and older content in your knowledge base, helping you build a running theory rather than a pile of isolated facts.
+  </Step>
+  <Step title="Weekly review">
+    Once a week, run a gap analysis:
+
+    ```text
+    Based on my reading this week, what questions do I still have open?
+    What topics am I clearly building expertise in, and where are the gaps?
+    ```
+
+    Hermes uses its episodic memory of your queries to identify recurring questions you haven't fully resolved and topics you've been circling without reaching a conclusion.
+  </Step>
+  <Step title="On-demand recall">
+    When you need to recall something — for a meeting, a writing project, or a new decision — query naturally:
+
+    ```text
+    I'm writing a section on the tradeoffs between RAG and fine-tuning.
+    What do I know about this from my reading? What are the strongest arguments on each side?
+    ```
+
+    Hermes synthesizes across all relevant ingested material, cites which sources support each claim, and flags where your notes contain conflicting positions.
+  </Step>
+</Steps>
+
+## A realistic conversation example
+
+Below is an example of what querying a mature knowledge base looks like in practice.
+
+```text You
+I remember reading something about the limitations of cosine similarity for semantic search.
+Can you find it and remind me of the main argument?
+```
+
+```text Hermes
+You ingested a blog post on this in March titled "Beyond Cosine: Why Embedding Distance
+Misleads at Scale" — the core argument was that cosine similarity performs poorly when
+embeddings cluster in a narrow angular region (common in high-dimensional spaces), causing
+semantically dissimilar documents to appear close.
+
+The author recommended using dot product similarity with L2-normalized vectors as a
+practical improvement, and cited three papers backing this up. You also left a comment
+when you ingested it: "check if this affects the vector DB benchmarks I was looking at."
+
+Want me to pull those benchmarks too?
+```
+
+```text You
+Yes, and connect it to the RAG evaluation paper I read last month.
+```
+
+```text Hermes
+The benchmarks you were reviewing (BEIR dataset, October 2025 version) do show a
+measurable drop for cosine similarity at high dimensionality — consistent with the blog's
+claim. Connecting to the RAG evaluation paper: the authors used cosine similarity throughout
+their retrieval stage, which may explain why their recall numbers were lower than expected
+on the NQ and TriviaQA subsets. This is a gap worth noting if you're writing about RAG
+evaluation methodology.
+```
+
+## How Skills develop for your knowledge domains
+
+After enough interactions within a domain, Hermes automatically proposes a Skill — a persistent behavioral profile for that area. For a knowledge assistant use case, a Skill might encode:
+
+- Your preferred citation format when Hermes references sources
+- The depth of technical detail you want (summary vs. full argument)
+- Which authors or publications you treat as high-signal vs. low-signal
+- Your recurring research questions and how you like answers structured
+
+You can review, edit, or reject proposed Skills at any time. Over time, a mature Skill means Hermes needs fewer clarifying questions and produces answers that fit your workflow without prompting.
+
+## Tips for organizing information to maximize effectiveness
+
+<Tip>
+  Always include a one-sentence context note when ingesting. "Why does this matter to me right now?" is the most useful signal Hermes can receive alongside raw content.
+</Tip>
+
+<Tip>
+  Use Hermes to make your ingestion decisions explicit. Before adding something, ask: "Is this worth adding to my knowledge base, or is it a one-time reference?" Over time this disciplines your reading diet.
+</Tip>
+
+<Tip>
+  Periodically ask Hermes to identify orphaned material — things you ingested but never queried. This surfaces content you've forgotten and helps prune low-value entries.
+</Tip>
+
+<Tip>
+  Connect your knowledge base to your writing workflow. When drafting, ask Hermes to find relevant passages from your knowledge base rather than searching externally — this keeps your writing grounded in sources you've already evaluated.
+</Tip>
+
+## Use case variants
+
+<CardGroup cols={3}>
+  <Card title="Academic research" icon="graduation-cap">
+    Track the literature across a field. Hermes maps citation relationships, identifies influential papers you haven't read yet, and helps you track how a debate has evolved over time.
+  </Card>
+  <Card title="Studying and exam prep" icon="book-open">
+    Feed Hermes your lecture notes, readings, and problem sets. Query it with practice questions, ask for concept explanations, and let it identify which topics you've covered least thoroughly.
+  </Card>
+  <Card title="Writing and journalism" icon="pen">
+    Build a source library for a long-form project. Hermes tracks which claims are supported by which sources, flags contradictions across your research, and helps you structure arguments before you start drafting.
+  </Card>
+</CardGroup>

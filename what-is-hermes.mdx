@@ -1,0 +1,102 @@
+---
+title: "What is Hermes Agent?"
+description: "Hermes Agent is an open-source AI Agent framework by Nous Research that learns, remembers, and improves itself — the first Agent built with reins that grow."
+keywords: ["Hermes Agent", "Nous Research", "AI Agent", "self-improving", "memory system", "Skills", "Harness Engineering"]
+---
+
+[Hermes Agent](https://github.com/NousResearch/hermes-agent) is an open-source AI Agent framework released by [Nous Research](https://hermes-agent.nousresearch.com/) in February 2026. It is designed not just to complete tasks, but to get measurably better at completing them over time — without requiring you to prompt it differently or reconfigure anything by hand.
+
+<Note>
+  The metaphor at the heart of this book: **"The first Agent that ships with reins built in — and the reins keep growing."** Hermes is the first Agent that comes with its own control and adaptation mechanisms already built in, and those mechanisms strengthen the more you use it.
+</Note>
+
+## How Hermes differs from other agents
+
+Most AI coding agents — Claude Code, OpenClaw, Cursor — are stateless task runners. You give them a prompt, they produce an output, and the interaction ends there. Nothing from that exchange carries forward to the next session. You are responsible for remembering what worked, re-explaining your context, and improving your prompts manually.
+
+Hermes takes a fundamentally different approach.
+
+<CardGroup cols={3}>
+  <Card title="Self-improving learning loop" icon="repeat">
+    After each task, Hermes evaluates its own output, identifies what worked and what didn't, and updates its internal behavior accordingly. Performance improves over sessions without manual intervention.
+  </Card>
+  <Card title="Three-layer memory system" icon="memory">
+    Hermes maintains working memory for the current task, session memory across a conversation, and long-term memory that persists between sessions. It knows what you've built, what you prefer, and what mistakes to avoid.
+  </Card>
+  <Card title="Automatic Skill creation" icon="gears">
+    When Hermes successfully solves a novel problem, it packages the solution as a reusable Skill. Skills accumulate over time, making Hermes faster and more reliable on similar tasks in the future.
+  </Card>
+</CardGroup>
+
+## A closer look at the three differentiators
+
+### The self-improving learning loop
+
+Every agent interaction with Hermes produces a feedback signal. Hermes uses that signal to update its internal heuristics — what strategies to try first, which tool sequences work for a given class of problem, and where it tends to make errors. This loop runs automatically; you do not configure it.
+
+The result is an Agent that starts useful on day one and becomes significantly more capable over weeks of use, calibrated to your specific codebase and working style.
+
+### The three-layer memory system
+
+<AccordionGroup>
+  <Accordion title="Working memory — the current task" icon="bolt">
+    Hermes tracks everything relevant to the task currently in progress: files being modified, intermediate results, errors encountered and recovered from. Working memory is cleared when the task completes.
+  </Accordion>
+  <Accordion title="Session memory — the current conversation" icon="messages">
+    Within a session, Hermes maintains continuity across multiple exchanges. It remembers what you've already asked for, what was decided, and what was rejected — so you don't have to repeat yourself.
+  </Accordion>
+  <Accordion title="Long-term memory — across all sessions" icon="database">
+    Between sessions, Hermes retains a persistent model of your project: its architecture, your naming conventions, recurring patterns, and preferences you've expressed explicitly or implicitly. Long-term memory is what makes Hermes feel like a colleague, not a tool.
+  </Accordion>
+</AccordionGroup>
+
+### Automatic Skill creation and evolution
+
+Skills are Hermes's mechanism for codifying expertise. When Hermes solves a problem it hasn't seen before — a particular deployment sequence, a code generation pattern, a debugging strategy — it distills that solution into a named, reusable Skill.
+
+Skills are not static. As Hermes encounters variations of a problem, existing Skills are refined and extended. Over time, your Hermes instance builds a library of Skills tuned to your environment and your work.
+
+<Tip>
+  Skills are stored locally and can be inspected, edited, or shared. If you work in a team, Skills developed by one Hermes instance can be seeded into another — accelerating the learning curve for the whole team.
+</Tip>
+
+## Connection to Harness Engineering
+
+If you've read the **Harness Engineering** 橙皮书, you'll recognize the conceptual foundation immediately. Harness Engineering describes five components that, together, give an AI Agent the structure to operate reliably under human oversight:
+
+| Component | Role |
+|-----------|------|
+| Instructions | Define what the Agent is supposed to do |
+| Constraints | Define what it must never do |
+| Feedback | Tell it how well it's doing |
+| Memory | Give it continuity across time |
+| Orchestration | Coordinate multiple Agents and tools |
+
+Hermes Agent is the first production implementation of all five of these components in a single, coherent system. It is not an experiment — it is a product you can run today.
+
+<CardGroup cols={2}>
+  <Card title="Learning loop and memory" icon="brain" href="/core/learning-loop">
+    Deep dive into how the learning loop and memory layers work together
+  </Card>
+  <Card title="Skills" icon="gears" href="/core/skills">
+    How Skills are created, stored, evolved, and shared
+  </Card>
+  <Card title="From Harness to Hermes" icon="robot" href="/concepts/from-harness-to-hermes">
+    The conceptual lineage — how Harness Engineering led to Hermes
+  </Card>
+  <Card title="Three-way comparison" icon="scale-balanced" href="/deep/comparison">
+    Hermes vs. Claude Code vs. OpenClaw — an honest side-by-side
+  </Card>
+</CardGroup>
+
+## Who this is for
+
+You'll get the most from Hermes — and from this guide — if you fit one of these profiles:
+
+- **Developers** who've used Claude Code, OpenClaw, or Cursor and want to understand what a genuinely self-improving Agent looks like in practice
+- **AI enthusiasts** who want to build a personal AI Agent that gets better the more they use it
+- **Practitioners of Harness Engineering** who want to see those five components turned into a real, running product
+
+<Note>
+  Hermes Agent is open source. The source is available at [github.com/NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent). This guide covers v0.7.0.
+</Note>

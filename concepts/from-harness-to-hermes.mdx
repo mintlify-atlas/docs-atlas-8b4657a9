@@ -1,0 +1,174 @@
+---
+title: "§01 From Harness to Hermes"
+sidebarTitle: "§01 From Harness to Hermes"
+description: "The conceptual foundation — what Harness Engineering is, why the five components matter, and how Hermes turns the theory into a working product."
+keywords: ["harness engineering", "agent architecture", "instructions", "constraints", "feedback", "memory", "orchestration"]
+---
+
+If you've worked with AI tools long enough, you've probably noticed a pattern: the more capable the model, the harder it is to keep it doing exactly what you want. Better models mean more autonomy — and more autonomy means more places where things can go wrong. The answer isn't to hobble the model. The answer is a better harness.
+
+This chapter introduces Harness Engineering as a conceptual framework, explains its five core components, and shows how Hermes Agent is the first tool to ship all five as a unified, self-improving system.
+
+## What is Harness Engineering?
+
+Harness Engineering is the discipline of designing the structures that surround an AI model — not the model itself, but everything that shapes how it behaves, what it can do, and how it learns from experience.
+
+The name comes from horsemanship. A harness doesn't limit a horse's strength — it channels it. A well-designed harness lets the horse do more work, not less, because its energy is directed rather than scattered.
+
+The same logic applies to AI agents. A well-designed harness gives the agent the freedom to act while keeping its actions legible, reversible, and aligned with what you actually want.
+
+<Note>
+  If you've read the *Harness Engineering* 橙皮书, you already know this framework. Hermes is its first full productization — every concept from that book maps directly to a feature you can configure.
+</Note>
+
+## The five components
+
+Harness Engineering breaks agent control down into five distinct components. Together, they define the complete surface of influence you have over an autonomous agent.
+
+<Tabs>
+  <Tab title="Instructions">
+    **Instructions** are the primary channel through which you communicate goals, preferences, and context to the agent.
+
+    In simple tools, instructions are just system prompts — static text prepended to every conversation. Harness Engineering treats instructions as a living artifact: structured, versioned, and composable.
+
+    Good instructions don't just tell the agent what to do. They convey *why*, which allows the agent to generalize to situations you didn't anticipate.
+
+    In Hermes, instructions are stored in a dedicated memory layer and can be updated automatically as the agent learns what works for you. You write them once, then refine them over time — or let Hermes refine them for you.
+  </Tab>
+  <Tab title="Constraints">
+    **Constraints** define the boundaries of acceptable agent behavior — the things it should never do regardless of instructions, context, or seemingly good reasons.
+
+    Where instructions are permissive ("here's what you should do"), constraints are prohibitive ("here's what you must never do"). They act as a safety envelope around everything else.
+
+    Constraints in a harness are explicit, not implicit. Rather than hoping the model infers your limits, you state them clearly: don't delete files without confirmation, don't make API calls to external services, don't commit to main directly.
+
+    Hermes ships with a default set of sensible constraints and makes it easy to add your own. Critically, constraints are enforced at the framework level — they persist across sessions, even as the agent learns and evolves.
+  </Tab>
+  <Tab title="Feedback">
+    **Feedback** is the mechanism by which the agent learns from outcomes. Without feedback, every conversation starts from zero. With it, the agent accumulates judgment.
+
+    In Harness Engineering, feedback has three forms:
+    - **Explicit feedback**: you tell the agent it did something right or wrong
+    - **Implicit feedback**: the agent observes the results of its actions (tests pass, builds succeed, you keep using a Skill)
+    - **Structural feedback**: the harness itself detects patterns and surfaces them for review
+
+    Hermes implements all three. Its learning loop — covered in depth in [§03](/core/learning-loop) — processes feedback continuously and uses it to update Skills, refine instructions, and adjust behavior over time.
+  </Tab>
+  <Tab title="Memory">
+    **Memory** is what makes an agent accumulate knowledge rather than reset with every session.
+
+    Harness Engineering distinguishes three memory types:
+    - **In-context memory**: what's in the current conversation window
+    - **External memory**: persistent storage the agent can read and write across sessions
+    - **Procedural memory**: learned Skills — reusable sequences the agent knows how to execute
+
+    Without a structured memory system, even the best agent is amnesiac. Each conversation starts cold. You re-explain preferences, re-describe context, re-correct the same mistakes.
+
+    Hermes's three-layer memory system — detailed in [§04](/core/memory-system) — eliminates this. The agent remembers what matters, forgets what doesn't, and organizes its knowledge so it can retrieve the right thing at the right moment.
+  </Tab>
+  <Tab title="Orchestration">
+    **Orchestration** governs how the agent plans, sequences, and executes multi-step tasks — including how it coordinates with other agents.
+
+    A single model call is not an agent. An agent is a system that can break a goal into steps, choose tools, handle failures, and adapt when the plan doesn't survive contact with reality.
+
+    Orchestration defines the rules for this: what tools the agent can use, in what order, under what conditions, and how it reports back to you. It's also the layer that governs multi-agent workflows — when to delegate, how to verify outputs, and how to merge results.
+
+    Hermes builds orchestration in at the framework level, with a structured tool ecosystem covered in [§06](/core/tool-ecosystem) and multi-agent patterns explored in [§15](/scenarios/multi-agent).
+  </Tab>
+</Tabs>
+
+## From five components to a working system
+
+Each component is useful in isolation. Instructions alone are better than no instructions. Constraints alone prevent obvious mistakes. But the five components only produce their full effect when they work together — when they're integrated into a single coherent system.
+
+This is the key insight of Harness Engineering: the harness is a *system*, not a checklist.
+
+<Info>
+  A harness where feedback can't update instructions is a harness that never learns. A harness where memory isn't connected to orchestration is a harness where the agent forgets what it knows mid-task. Integration is what makes the five components more than the sum of their parts.
+</Info>
+
+## The conceptual journey: prompt to harness to agent
+
+Understanding Hermes requires understanding the progression that led to it. Each stage solves a real problem — and creates new ones that the next stage addresses.
+
+<Steps>
+  <Step title="Prompt engineering">
+    The earliest approach to shaping AI behavior: write better prompts. This works well for single-turn interactions and simple tasks. The model follows your prompt, you get a result, you're done.
+
+    The problem appears when tasks get complex, when you need consistency across sessions, or when the model's output needs to feed into a larger workflow. A prompt is ephemeral. It vanishes at the end of the conversation, taking everything the model "learned" with it.
+  </Step>
+  <Step title="System prompt engineering">
+    The next evolution: persistent instructions baked into a system prompt that precedes every conversation. This solved the consistency problem — the agent now has a stable baseline of instructions it carries into every interaction.
+
+    But system prompts are static. They don't update when they're wrong. They can't encode the constraints separately from the instructions. They have no feedback loop. And they don't scale well — as the instructions grow, they become unwieldy and hard to maintain.
+  </Step>
+  <Step title="Harness Engineering">
+    Harness Engineering formalizes what practitioners had been doing informally: treating the five components as distinct concerns, each with its own design principles and update mechanisms.
+
+    This stage unlocks real capability. You can now reason clearly about what the agent is allowed to do (constraints) vs. what it's encouraged to do (instructions). You can build feedback loops. You can design memory systems. You can compose orchestration patterns.
+
+    The remaining limitation: doing this well required significant custom engineering. There was no standard implementation — every team built their own harness from scratch, with all the duplication and maintenance burden that implies.
+  </Step>
+  <Step title="Hermes Agent">
+    Hermes is the first off-the-shelf productization of all five harness components in a single framework. You don't build the harness — you configure it.
+
+    More importantly, Hermes's harness is *self-improving*. The feedback component drives updates to the instruction and memory components. Skills evolve based on what works. Constraints remain stable while everything else adapts. The harness grows with the agent — and with you.
+
+    This is the architectural leap that separates Hermes from tools like Claude Code and OpenClaw, which are powerful but do not implement the full harness model.
+  </Step>
+</Steps>
+
+## Why the self-improving harness matters
+
+A static harness is better than no harness. But a harness that improves over time is qualitatively different — it changes the relationship between you and the agent.
+
+With a static harness, you're always the one doing the work of improvement. You notice a problem, diagnose the cause, update the relevant component, test, iterate. This is viable but slow, and it requires you to maintain expertise in harness design alongside whatever else you're doing.
+
+With a self-improving harness, the agent participates in its own improvement. It notices patterns in its successes and failures. It proposes Skill updates. It flags when instructions seem to be causing problems. You review, approve, or reject — but the cognitive load of discovery and diagnosis shifts to the agent.
+
+<Tip>
+  Think of it as the difference between a tool you maintain and a collaborator who helps maintain themselves. The harness doesn't disappear — your role in it changes from mechanic to reviewer.
+</Tip>
+
+Over time, this produces an agent that is genuinely calibrated to your specific context: your codebase, your preferences, your workflows, your constraints. Not a generic agent you've prompted well — a specialized agent that has learned from working with you.
+
+## Hermes as the first full implementation
+
+The *Harness Engineering* 橙皮书 laid out the theory. Hermes is where the theory becomes something you can install and run.
+
+Every concept in that book maps to a concrete Hermes feature:
+
+| Harness component | Hermes feature |
+|-------------------|----------------|
+| Instructions | `HERMES.md` — the primary instruction file, updated by the learning loop |
+| Constraints | Built-in constraint layer, configurable per project |
+| Feedback | The self-improving learning loop (§03) |
+| Memory | Three-layer memory system: in-context, external, procedural (§04) |
+| Orchestration | Structured tool ecosystem and multi-agent support (§06, §15) |
+
+This one-to-one mapping is not accidental. Hermes was designed to be a complete implementation of the harness model — not just a capable agent that happens to implement some harness-like patterns.
+
+<Note>
+  You don't need to have read the *Harness Engineering* 橙皮书 to use Hermes. But if you have, you'll recognize the architecture immediately. This documentation is the bridge between the two books.
+</Note>
+
+## What comes next
+
+Chapter §02 — [Eliminating Anxiety](/concepts/eliminating-anxiety) — addresses the concerns developers commonly raise about autonomous agents: what happens when they act unexpectedly, how to trust their memory, and how to stay in control as they become more capable.
+
+From §03 onward, the book shifts from concepts to mechanisms: how the learning loop actually works, how the memory system is structured, and how Skills are created and evolved.
+
+<CardGroup cols={2}>
+  <Card title="§02 Eliminating Anxiety" icon="shield-check" href="/concepts/eliminating-anxiety">
+    Common concerns about autonomous agents — and how Hermes's built-in controls address them
+  </Card>
+  <Card title="§03 The Learning Loop" icon="rotate" href="/core/learning-loop">
+    How Hermes's feedback mechanism drives continuous self-improvement
+  </Card>
+  <Card title="§04 The Memory System" icon="database" href="/core/memory-system">
+    The three-layer memory architecture that gives Hermes persistence
+  </Card>
+  <Card title="§05 Skills" icon="puzzle-piece" href="/core/skills">
+    How Hermes creates, stores, and evolves reusable capabilities
+  </Card>
+</CardGroup>

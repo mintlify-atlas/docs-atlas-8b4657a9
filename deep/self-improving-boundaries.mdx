@@ -1,0 +1,143 @@
+---
+title: "§17. The boundaries of self-improving agents"
+description: "What self-improvement in AI agents actually means, what Hermes can and cannot learn, the risks involved, and how to stay in control."
+sidebarTitle: "§17. Self-improving boundaries"
+keywords: ["self-improving", "hermes agent", "memory", "skills", "drift", "ai safety", "learning loop"]
+---
+
+"Self-improving AI" is one of those phrases that lands differently depending on who hears it. For some, it conjures transformative possibility — an agent that gets genuinely smarter over time. For others, it raises immediate questions about control and safety. Both reactions are reasonable. Neither is quite accurate about what Hermes actually does.
+
+This chapter is an attempt at honest accounting: what self-improvement means in the context of Hermes, what it does not mean, where the risks are, and how to think clearly about a technology that is genuinely new.
+
+---
+
+## What "self-improving" actually means
+
+When Hermes is described as self-improving, the claim is specific and bounded. It does not mean Hermes rewrites its own model weights, increases its raw intelligence, or becomes a fundamentally different system over time. What it means is this: **Hermes builds and refines a structured representation of your context, preferences, and recurring workflows, and uses that representation to produce better outputs for your specific situation.**
+
+The improvement is about *context*, not *capability*. A Hermes that has worked with you for three months does not have better reasoning than a fresh install — it has a better model of *you*. It knows your codebase conventions. It has a Skill for the deployment workflow you run every Friday. It knows you prefer concise explanations over verbose ones. This accumulated context is what makes it more useful, not any change to the underlying model.
+
+This distinction matters because it sets accurate expectations. Hermes will not suddenly become capable of tasks it could not do before. It will become progressively better at the specific tasks you actually do.
+
+---
+
+## What Hermes can and cannot improve
+
+<AccordionGroup>
+  <Accordion title="Task patterns and recurring workflows" icon="rotate">
+    When you perform the same type of task repeatedly — running a deployment, writing a certain kind of test, summarizing meeting notes into a specific format — Hermes observes the pattern and can synthesize a Skill. Over multiple executions, the Skill refines: edge cases get handled, steps get reordered for efficiency, and the output format converges on what you actually use.
+
+    This is probably the most tangible form of improvement in daily use. Workflows that required careful prompting on day one become one-liners by week four.
+  </Accordion>
+  <Accordion title="Response style and communication preferences" icon="message">
+    Hermes tracks feedback signals about how you respond to its outputs. If you consistently ask it to be more concise, or consistently expand on summaries it produces, these preferences are written into semantic memory. Future responses adjust accordingly — without you needing to re-specify your preferences each session.
+
+    This is subtle but meaningful. After a few months of use, Hermes responses feel calibrated to you in ways that are hard to attribute to any single interaction.
+  </Accordion>
+  <Accordion title="Skill quality and reliability" icon="star">
+    Skills are not static once created. Each execution produces a feedback signal — did the Skill complete successfully, did the output require correction, were there steps that failed? This signal feeds back into the Skill definition. Skills improve with use in the same way a human procedure improves with rehearsal: rough edges get smoothed, failure modes get handled.
+
+    You can also edit Skills directly. The learning loop and manual editing are complementary: the loop handles gradual refinement, manual editing handles deliberate redesign.
+  </Accordion>
+  <Accordion title="Memory retrieval relevance" icon="database">
+    Over time, Hermes develops a better sense of which memories are relevant to a given task. Early on, it may surface memories that are not quite on-topic. As the memory graph grows denser and more structured, retrieval becomes more precise. The improvement here is not algorithmic — it is that more relevant memories exist to be retrieved.
+  </Accordion>
+  <Accordion title="Underlying model weights" icon="lock" defaultOpen={false}>
+    **Hermes cannot improve this.** The model that powers Hermes — whether that is a local model, a Claude API, or any other backend — is fixed. Hermes does not fine-tune or modify model weights based on your interactions. The parameters that determine the model's raw reasoning, knowledge, and capabilities are unchanged by your use.
+
+    This means that if the underlying model struggles with a task on day one, it will struggle with the same task on day 90. Hermes's accumulated context can sometimes route around model limitations by providing better scaffolding, but it cannot eliminate them.
+  </Accordion>
+  <Accordion title="Fundamental reasoning ability" icon="lock" defaultOpen={false}>
+    **Hermes cannot improve this.** The depth of reasoning, the breadth of world knowledge, and the logical capabilities of the agent are determined by the underlying model. These are not things that accumulate in memory or sharpen through repetition. If the model cannot reliably do multi-step mathematical reasoning, Hermes's self-improving mechanisms will not change that.
+
+    It is worth being clear-eyed about this limitation. Self-improvement at the context layer is real and valuable, but it is not the same as self-improvement at the capability layer.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## The risk of drift
+
+The learning loop that makes Hermes useful also introduces a risk that does not exist in stateless agents: **drift**.
+
+Drift happens when the agent's accumulated behaviors diverge from what you actually want. It can happen gradually — a small miscommunication in a feedback signal, a Skill that gets refined in the wrong direction, a memory that encodes an exception as a rule. Over time, these small deviations compound.
+
+The most common forms of drift are:
+
+- **Style drift**: The agent's response style shifts in a direction that feels subtly off — perhaps becoming more verbose when you wanted it to stay concise, or adopting a formal tone when your preference is casual.
+- **Skill drift**: A Skill that worked well begins to produce outputs that require more correction. This often happens when the use case for a Skill evolves but the Skill definition does not keep pace.
+- **Memory drift**: Episodic or semantic memories from a past context bleed into a current one inappropriately. For example, preferences from an old project contaminate decisions on a new one.
+
+<Warning>
+  Drift is not a sign that something has gone wrong with Hermes — it is a natural consequence of any learning system. The appropriate response is not to avoid learning, but to build a habit of periodic review. Think of it the same way you would think about reviewing a long-running documentation wiki: the content is valuable, but it needs maintenance to stay accurate.
+</Warning>
+
+---
+
+## How to reset or correct learned behaviors
+
+Hermes provides several mechanisms for correcting drift, ranging from surgical corrections to full resets.
+
+**Correcting a specific behavior**: If Hermes has developed a style quirk or response pattern you want to change, the most direct approach is explicit feedback in a session. Tell it specifically what you want changed and why. Hermes will encode this as a preference update. For persistent style issues, you can also directly edit the relevant entries in semantic memory via the memory management interface.
+
+**Editing or resetting a Skill**: Navigate to the Skills panel and open the Skill in question. You can edit any step, change the success criteria, or reset the Skill to its initial synthesized form. If a Skill has drifted far enough that editing is harder than rewriting, you can delete it — Hermes will re-synthesize a fresh version the next time it observes the relevant pattern.
+
+**Selective memory pruning**: The memory management interface lets you view, search, and delete individual memory entries. For cases where a specific project's context is contaminating work on another project, you can scope or prune memories by project tag.
+
+**Full reset**: Hermes supports a full memory reset that clears all three memory layers and all learned Skills, returning the agent to its initial state. This is a last resort — it discards everything the agent has learned. Use it when drift is pervasive and the cost of repair exceeds the cost of starting over.
+
+<Tip>
+  A useful practice is a monthly five-minute review of Hermes's memory and Skills. Prune anything that looks stale or incorrect, and verify that the Skills you use most frequently still produce the outputs you expect. This small maintenance habit prevents drift from accumulating to the point where it becomes a real problem.
+</Tip>
+
+---
+
+## Privacy considerations
+
+Self-improvement requires data. Understanding what data Hermes uses — and what it does not — is important for making informed decisions about what you work on with it.
+
+When Hermes runs locally, all memory and learning data stays on your machine. Nothing is sent to external servers except the API calls to whatever model backend you have configured. The learning loop, memory systems, and Skill definitions are all local artifacts.
+
+When you use a cloud-hosted model backend, the content of your prompts and the model's responses are transmitted to that provider, as with any API call. The provider's data handling policies apply. Hermes itself does not add any additional data collection on top of what your model backend already sees.
+
+<Note>
+  If you are working with sensitive data — proprietary code, client information, internal systems — review your model backend's data handling policies before using any AI agent, including Hermes. For the highest sensitivity work, use a local model backend that keeps all data on your machine.
+</Note>
+
+The memories and Skills that Hermes builds are stored locally in structured files that you can read, edit, or delete at any time. There is no opaque learning database that you cannot inspect.
+
+---
+
+## The ethical dimension: transparency in AI self-modification
+
+Hermes's learning loop raises a question that most AI tools sidestep entirely: *should AI systems be transparent about what they have learned and how?*
+
+The answer built into Hermes's design is yes. Every memory entry is readable. Every Skill is inspectable. Every change the learning loop makes can be reviewed and reversed. This is not just a technical feature — it reflects a position about what responsible self-modifying systems should look like.
+
+An AI agent that modifies itself in ways the user cannot see or understand is an agent that the user cannot meaningfully control. The transparency Hermes provides is what makes the self-improvement trustworthy: you can verify, at any point, that what the agent has learned matches what you intended to teach it.
+
+This is worth holding onto as the technology develops. The value of self-improving agents is real. So is the obligation to keep the improvement legible to the humans working alongside the agent.
+
+---
+
+## Future directions
+
+The version of Hermes this book covers — v0.7.0 — is an early iteration of what self-improving agents can be. The directions the field is heading include:
+
+- **Cross-agent knowledge sharing**: Mechanisms for agents working in the same team to share learned Skills and preferences, so context built by one agent becomes available to others working on the same codebase.
+- **Learning from observation**: Agents that can learn from watching you work, not just from explicit interactions — synthesizing Skills from screen activity or development environment telemetry.
+- **Meta-learning**: Agents that develop better learning strategies over time, not just better task-level behaviors.
+
+Each of these directions also intensifies the questions this chapter has raised: about transparency, about privacy, about the right relationship between human judgment and agent learning. These are not problems that will be solved once. They will need to be renegotiated with each new capability.
+
+---
+
+## A closing reflection
+
+There is something genuinely exciting about an AI agent that gets better through use. The first time Hermes completes a complex deployment workflow in one step — a workflow you previously had to prompt through manually every time — it is hard not to feel that something significant has happened.
+
+There is also something that warrants genuine caution. Self-modifying systems are harder to reason about than static ones. The accumulated learning that makes Hermes useful also makes it harder to predict in edge cases. The more it has learned about you, the more a failure mode can feel personal — like a trusted colleague getting something wrong rather than a tool returning an error.
+
+The right response to both feelings is not to suppress either of them. The excitement points toward real value. The caution points toward real responsibility — the responsibility to stay engaged with what your agent is learning, to review it periodically, and to correct it when it drifts.
+
+Self-improving agents are not autonomous. They are collaborative. The loop works best when both sides are paying attention.

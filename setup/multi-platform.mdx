@@ -1,0 +1,335 @@
+---
+title: 'Multi-platform setup'
+description: 'Run Hermes on macOS, Windows (WSL2), Linux, VS Code, Cursor, and via web interface — with configuration sync across devices.'
+sidebarTitle: '§09 Multi-platform'
+keywords: ['macos', 'windows', 'linux', 'wsl', 'vscode', 'cursor', 'web', 'sync', 'platform']
+---
+
+# §09. Multi-platform setup
+
+Hermes runs wherever you work. This chapter covers platform-specific setup steps, editor integrations, and how to keep your configuration consistent across multiple machines.
+
+---
+
+## Running Hermes by platform
+
+<Tabs>
+  <Tab title="macOS">
+    ### macOS
+
+    macOS is the most common development platform for Hermes and has the most straightforward setup.
+
+    **Prerequisites**
+
+    - macOS 12 (Monterey) or later
+    - [Homebrew](https://brew.sh) recommended (not required)
+    - Xcode Command Line Tools: `xcode-select --install`
+
+    **Install**
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+    source ~/.zshrc
+    hermes doctor
+    ```
+
+    The installer detects the shell you are using (bash or zsh) and writes to the correct profile file.
+
+    **macOS-specific notes**
+
+    - The default shell on macOS 10.15+ is **zsh**. If you use bash, replace `~/.zshrc` with `~/.bashrc` in any commands that reference it.
+    - Gatekeeper may block the binary on first run if you used the binary download method. Fix it with:
+      ```bash
+      xattr -d com.apple.quarantine /usr/local/bin/hermes
+      ```
+    - If you use Homebrew Python, make sure `python3` on your `$PATH` is the Homebrew version (≥3.10), not the system Python shipped with macOS.
+
+    <Note>
+    Apple Silicon (M1/M2/M3) is fully supported. The installer builds native arm64 packages where available, falling back to Rosetta-compatible binaries otherwise. Run `hermes doctor` to confirm the architecture is detected correctly.
+    </Note>
+
+    **Recommended terminal**
+
+    [iTerm2](https://iterm2.com) or the built-in Terminal.app both work. [Warp](https://www.warp.dev) is also supported. If you see garbled Unicode in the TUI, set your terminal to UTF-8 encoding and a Nerd Font or a monospace font with full Unicode coverage.
+  </Tab>
+
+  <Tab title="Windows (WSL2)">
+    ### Windows via WSL2
+
+    Hermes does not run natively on Windows. The recommended approach is WSL2 (Windows Subsystem for Linux), which gives you a full Linux environment inside Windows.
+
+    **Step 1: Install WSL2**
+
+    Open PowerShell as Administrator and run:
+
+    ```powershell
+    wsl --install
+    ```
+
+    Restart your machine when prompted. This installs WSL2 with Ubuntu by default.
+
+    **Step 2: Open a WSL terminal**
+
+    From the Start menu, open "Ubuntu" (or your chosen distro). You are now in a Linux shell.
+
+    **Step 3: Install Hermes**
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+    source ~/.bashrc
+    hermes doctor
+    ```
+
+    <Note>
+    WSL2 and WSL1 are both usable, but WSL2 is strongly recommended. WSL1 has known issues with filesystem performance and some Python packages. Check your version with `wsl --list --verbose` in PowerShell.
+    </Note>
+
+    **Windows Terminal**
+
+    Install [Windows Terminal](https://aka.ms/terminal) from the Microsoft Store. It renders the Hermes TUI correctly, supports 256-color and true-color, and lets you open WSL tabs alongside PowerShell tabs.
+
+    **WSL-specific tips**
+
+    - Your Windows files live at `/mnt/c/Users/YourName/`. You can point Hermes at projects in this path, but keep `~/.hermes/` inside WSL's native filesystem for best performance.
+    - To access Hermes from Windows applications (like VS Code), install the [WSL extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl).
+    - Copy-paste in WSL2: use **Ctrl+Shift+C** / **Ctrl+Shift+V** in Windows Terminal.
+
+    **Running Hermes gateway from Windows startup**
+
+    To start the Hermes messaging gateway automatically when Windows boots, create a `.bat` file in your Windows startup folder that calls `wsl hermes gateway start`. See the [official Hermes documentation](https://hermes-agent.nousresearch.com/docs/) for details.
+  </Tab>
+
+  <Tab title="Linux">
+    ### Linux
+
+    Hermes is developed and tested primarily on Linux. All distributions with glibc 2.31+ (Ubuntu 20.04, Debian 11, Fedora 34, Arch, etc.) are supported.
+
+    **Install**
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+    source ~/.bashrc
+    hermes doctor
+    ```
+
+    **Distribution-specific notes**
+
+    | Distro | Notes |
+    |---|---|
+    | Ubuntu 20.04 | Python 3.8 default; installer upgrades to 3.11 automatically |
+    | Ubuntu 22.04+ | Python 3.10+ available via `apt`; no extra steps needed |
+    | Debian 11 (Bullseye) | Use `apt install python3.11` from backports |
+    | Fedora / RHEL 9+ | `dnf install python3.11 nodejs` before running the installer |
+    | Arch Linux | `pacman -S python nodejs npm` then run the installer |
+    | NixOS | Use the provided `flake.nix`: `nix develop` drops you into a shell with all dependencies |
+
+    **Running on a VPS or headless server**
+
+    Hermes works fully on a headless server — the TUI adapts to non-interactive terminals. For long-running server deployments, use the messaging gateway (Telegram, Discord, etc.) instead of the TUI:
+
+    ```bash
+    hermes gateway setup    # one-time: configure your messaging platform
+    hermes gateway start    # starts the gateway process
+    ```
+
+    To keep the gateway running after SSH logout:
+
+    ```bash
+    # Using systemd (recommended)
+    hermes gateway install-service
+    systemctl --user enable --now hermes-gateway
+
+    # Or using screen/tmux
+    screen -dmS hermes hermes gateway start
+    ```
+
+    <Note>
+    The `hermes gateway install-service` command generates a systemd unit file at `~/.config/systemd/user/hermes-gateway.service`. It handles restarts on failure and boots with your user session automatically.
+    </Note>
+
+    **Docker**
+
+    A pre-built Docker image is available:
+
+    ```bash
+    docker pull nousresearch/hermes-agent:latest
+    docker run -it \
+      -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+      -v ~/.hermes:/root/.hermes \
+      nousresearch/hermes-agent:latest
+    ```
+
+    Mounting `~/.hermes` persists your config, memories, and skills across container restarts.
+  </Tab>
+</Tabs>
+
+---
+
+## Editor integrations
+
+<CardGroup cols={2}>
+  <Card title="VS Code" icon="code" href="#vs-code">
+    Run Hermes in the integrated terminal with full TUI support, or use the terminal-integrated workflow with split panels.
+  </Card>
+  <Card title="Cursor" icon="mouse-pointer" href="#cursor">
+    Use Hermes alongside Cursor's AI features for tasks that benefit from a persistent agent with memory.
+  </Card>
+  <Card title="Neovim / Vim" icon="terminal" href="#neovim">
+    Open Hermes in a terminal split. The TUI renders correctly in any terminal emulator that Neovim supports.
+  </Card>
+  <Card title="JetBrains IDEs" icon="layout" href="#jetbrains">
+    Run Hermes in the built-in terminal pane (PyCharm, WebStorm, IntelliJ, etc.).
+  </Card>
+</CardGroup>
+
+### VS Code
+
+Open the integrated terminal with **Ctrl+`** (or **Cmd+`** on macOS) and run `hermes`. The TUI works in VS Code's terminal with no special configuration.
+
+For a better workflow, split the terminal horizontally and keep Hermes in one pane while your code is in the other:
+
+1. Open the terminal panel.
+2. Click the split icon (or press **Ctrl+Shift+5**) to open a second terminal.
+3. Run `hermes` in one pane and leave the other for shell commands.
+
+**WSL + VS Code**
+
+If you are on Windows using WSL2, install the [Remote - WSL extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl). Open VS Code with `code .` from inside your WSL terminal. The integrated terminal will use the WSL environment, and `hermes` will be available there.
+
+<Note>
+VS Code's default terminal font may not include all Unicode box-drawing characters used by the Hermes TUI. If the interface looks broken, change your terminal font to a Nerd Font or [FiraCode](https://github.com/tonsky/FiraCode): go to **Settings → Terminal → Font Family** and set it to `"FiraCode Nerd Font", monospace`.
+</Note>
+
+**Context files**
+
+Hermes supports a `AGENTS.md` file in your project root (similar to OpenClaw's `CLAUDE.md`). VS Code users can add this file to give Hermes context about the project it is working on:
+
+```bash
+# In your project directory
+cat > AGENTS.md << 'EOF'
+This is a Next.js 14 project using TypeScript and Tailwind CSS.
+The main entry point is src/app/page.tsx.
+Tests use Vitest. Run them with: npm test
+EOF
+```
+
+Hermes reads this file automatically at the start of every session in that directory.
+
+---
+
+### Cursor
+
+Cursor has its own AI features, but Hermes complements them in situations where you need:
+
+- A persistent agent that remembers context across days of work
+- Scheduled automations (nightly test runs, daily summaries)
+- Multi-step tasks that span many tool calls
+- Memory and skills that transfer across projects
+
+To use Hermes inside Cursor, open the built-in terminal (**Ctrl+`**) and run `hermes`. Everything works as in VS Code.
+
+<Tip>
+A productive split: use Cursor's inline AI for quick edits and completions, and use Hermes (in the terminal panel) for longer-running tasks like "refactor this module to use the new API" or "write and run tests for these three files". Hermes can see and edit files using its own tools, so it works independently of Cursor's editor state.
+</Tip>
+
+**Cursor rules and AGENTS.md**
+
+Cursor reads `.cursorrules` and Hermes reads `AGENTS.md`. You can maintain both files in the same project. They are independent — changes to one do not affect the other.
+
+---
+
+### Neovim
+
+Open a terminal split with `:split | terminal` and run `hermes`. Alternatively, use a floating terminal plugin like [toggleterm.nvim](https://github.com/akinsho/toggleterm.nvim):
+
+```lua
+-- In your toggleterm config
+require("toggleterm").setup({
+  shell = "hermes",  -- launch hermes directly in toggleterm
+  direction = "float",
+})
+```
+
+---
+
+### JetBrains IDEs
+
+Open the terminal pane at the bottom of the IDE (**Alt+F12**) and run `hermes`. JetBrains terminals support the full TUI.
+
+<Note>
+JetBrains terminals on Windows use PowerShell by default. If you are using WSL2, change the default shell in **Settings → Tools → Terminal → Shell path** to `wsl.exe`.
+</Note>
+
+---
+
+## Web interface
+
+Hermes does not have a hosted web interface, but you can expose a local web UI using the gateway's web mode:
+
+```bash
+hermes gateway web --port 8080
+```
+
+This starts a local web server at `http://localhost:8080` with a chat interface. It is useful when:
+
+- You are connecting to a remote server via SSH and want a browser-based UI
+- You want to share access with a team member temporarily (run on a VPS with a reverse proxy)
+
+<Warning>
+The web interface has no authentication by default. Only expose it on `localhost` or behind a properly configured reverse proxy with authentication. Never expose it directly to the public internet.
+</Warning>
+
+---
+
+## Syncing configuration across devices
+
+Your Hermes configuration, memories, and skills live in `~/.hermes/`. To sync them across machines, use any file sync method you prefer.
+
+**Directory structure to sync:**
+
+```
+~/.hermes/
+├── config.yaml        # main configuration file
+├── MEMORY.md          # semantic memory (editable)
+├── USER.md            # your user profile
+├── skills/            # user-created skills
+│   └── my-skill.md
+└── .env               # API keys (do NOT sync this file)
+```
+
+<Warning>
+Never sync `~/.hermes/.env` or any file containing API keys. Sync configuration and memory files only. API keys should be set separately on each machine via environment variables or a secrets manager.
+</Warning>
+
+**Option 1: Git repository**
+
+```bash
+cd ~/.hermes
+git init
+echo ".env" >> .gitignore
+echo "*.log" >> .gitignore
+git add config.yaml MEMORY.md USER.md skills/
+git commit -m "initial hermes config"
+git remote add origin git@github.com:yourname/hermes-config.git
+git push -u origin main
+```
+
+On another machine:
+
+```bash
+git clone git@github.com:yourname/hermes-config.git ~/.hermes
+# Then set your API keys locally:
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+**Option 2: Syncthing or rclone**
+
+Use [Syncthing](https://syncthing.net) for peer-to-peer sync or [rclone](https://rclone.org) to sync with cloud storage. Configure either tool to sync `~/.hermes/` and exclude `.env`.
+
+**Option 3: Dotfiles manager**
+
+If you already use a dotfiles manager (chezmoi, yadm, stow), add `~/.hermes/` to your managed files. Use your manager's secrets handling to keep API keys out of version control.
+
+<Tip>
+On shared machines, prefer environment variables for API keys over storing them in `~/.hermes/.env`. Use your shell's startup file (`~/.bashrc` or `~/.zshrc`) or a tool like [direnv](https://direnv.net) to load the right key per project.
+</Tip>

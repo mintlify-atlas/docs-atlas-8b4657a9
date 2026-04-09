@@ -1,0 +1,214 @@
+---
+title: "§04. The three-layer memory system"
+sidebarTitle: "Memory system"
+description: "How Hermes stores, retrieves, and updates what it knows — across working memory, episodic memory, and semantic memory."
+keywords: ["memory", "working memory", "episodic memory", "semantic memory", "persistence", "privacy"]
+---
+
+Human memory isn't a single thing. We hold some information in active awareness right now, recall specific past experiences when they're relevant, and carry a background layer of general knowledge and learned preferences that shapes how we think without requiring conscious recall. Hermes's memory system is built on the same principle.
+
+The three layers — **working memory**, **episodic memory**, and **semantic memory** — serve different purposes, operate on different timescales, and persist differently across sessions. Understanding all three helps you understand why Hermes behaves the way it does and how to manage what it knows.
+
+## Overview of the three memory layers
+
+<Tabs>
+  <Tab title="Working memory">
+    **Working memory** is the active context of the current session. It holds everything Hermes is actively reasoning about: the current task, recent tool outputs, intermediate results, and the live conversation.
+
+    Working memory is fast, rich in detail, and temporary. It exists only for the duration of a session. When you close a session, working memory is cleared — it is not persisted.
+
+    **What lives in working memory:**
+    - The current conversation history
+    - Intermediate reasoning steps for the active task
+    - Tool call results and their parsed outputs
+    - Recently retrieved content from episodic and semantic memory
+    - The current task's execution state (files opened, commands run, errors encountered)
+
+    **Capacity:** Working memory is bounded by the context window of the underlying model. Hermes manages this automatically, summarizing or evicting older context when the window approaches capacity. You can observe this happening if you notice Hermes explicitly referencing earlier parts of a long session rather than quoting them directly.
+
+    <Note>
+      Working memory is rebuilt at the start of each session by loading relevant content from episodic and semantic memory. This is why Hermes can "pick up where it left off" without storing the raw conversation.
+    </Note>
+  </Tab>
+  <Tab title="Episodic memory">
+    **Episodic memory** stores records of past sessions and significant interactions. These are structured summaries, not raw transcripts — Hermes extracts what's worth retaining and discards the rest.
+
+    Episodes are the autobiographical layer of Hermes's memory. They let Hermes reason about what it has done with you before, what approaches worked, and what the current state of ongoing projects is.
+
+    **What lives in episodic memory:**
+    - Session summaries: what was accomplished, what tools were used, what the outcome was
+    - Task-outcome pairs: the approach taken and whether it succeeded
+    - Correction records: instances where you edited or rejected Hermes's output
+    - Project state snapshots: the last-known state of ongoing work (current branch, open issues, pending tasks)
+    - Notable failures: errors that took multiple attempts to resolve, along with what finally worked
+
+    **Retrieval:** When you start a new session or begin a new task, Hermes queries episodic memory for relevant past episodes. Relevance is determined by task similarity, project context, and recency. Retrieved episodes are loaded into working memory as context.
+
+    **Capacity:** Episodic memory is subject to retention limits. Older, lower-relevance episodes are gradually compressed or evicted to make room for newer ones. High-significance episodes (major corrections, breakthroughs) are retained longer.
+
+    <Tip>
+      You can manually pin an episode to prevent it from being evicted. Use `hermes memory pin <episode-id>` to mark an episode as permanent. Run `hermes memory list --episodes` to see recent episodes and their IDs.
+    </Tip>
+  </Tab>
+  <Tab title="Semantic memory">
+    **Semantic memory** is the distilled knowledge layer — facts, preferences, conventions, and generalizations that Hermes has extracted from your interactions over time.
+
+    This is the most durable layer. While episodes are records of specific events, semantic memories are extracted generalizations: "this user prefers TypeScript over JavaScript," "the test suite in this project requires a specific setup command," "error messages in this codebase follow a particular format."
+
+    **What lives in semantic memory:**
+    - Your stated and inferred preferences (code style, response length, terminology)
+    - Project-specific conventions (file naming, branch naming, commit message format)
+    - Tool reliability calibrations (which tools tend to fail in your environment and why)
+    - Factual knowledge about your setup (OS, package manager, project structure)
+    - Learned vocabulary (domain terms, abbreviations, project codenames you use)
+
+    **How it's populated:** Semantic memories are written by the [learning loop](/core/learning-loop) during the reflection stage. They can also be written explicitly — if you tell Hermes a fact ("always use tabs in this project"), it stores it in semantic memory immediately.
+
+    **Retrieval:** Semantic memory is queried at the start of every task. Relevant facts are loaded into working memory and inform Hermes's behavior throughout the session.
+
+    <Note>
+      Semantic memory entries have a confidence level. Inferred preferences start with moderate confidence and increase each time the pattern is reinforced. Explicit statements you make start at high confidence and don't decay.
+    </Note>
+  </Tab>
+</Tabs>
+
+## Memory lifecycle
+
+How a piece of information moves from a raw interaction to a persistent memory follows a consistent path:
+
+<Steps>
+  <Step title="Capture">
+    During a session, Hermes captures signals from the interaction: your messages, tool outputs, corrections you make to generated content, and environmental responses. This raw signal is held in working memory.
+  </Step>
+  <Step title="Reflection">
+    At the end of a task or session, the [learning loop](/core/learning-loop) reviews what happened. It identifies which signals are worth persisting: a preference expressed, a correction made, a task pattern repeated, or a significant outcome reached.
+  </Step>
+  <Step title="Distillation">
+    Raw signals are distilled into structured memory entries. An episode record captures the shape of a session — what was done, how it went, what the outcome was. A semantic entry captures a generalized fact extracted from the episode.
+  </Step>
+  <Step title="Storage">
+    Distilled entries are written to the appropriate memory layer. Episode records go to episodic memory. Generalized facts and preferences go to semantic memory.
+  </Step>
+  <Step title="Retrieval">
+    At the start of future sessions, Hermes queries both layers for entries relevant to the current context. Matching entries are loaded into working memory, where they inform task planning and execution.
+  </Step>
+  <Step title="Reinforcement or decay">
+    Over time, memories are either reinforced (when the same pattern recurs) or decay (when evidence contradicts them or they go unused). Reinforced entries gain confidence and persist longer. Decayed entries are eventually removed.
+  </Step>
+</Steps>
+
+## How Hermes gets to "know" you over time
+
+The memory system enables a qualitative shift in how the agent behaves across months of use. The mechanism is cumulative:
+
+Early sessions populate semantic memory with basic facts about your environment and preferences. As those facts inform behavior, Hermes makes fewer corrections-required outputs. Episodic memory starts to contain records of successful patterns — approaches that worked well in your specific context.
+
+Over time, the semantic memory layer fills with a detailed model of how you work: your conventions, your vocabulary, the structure of your projects, and the failure modes that are common in your setup. Hermes uses this model proactively — not just when asked, but when planning how to approach any new task.
+
+The result isn't that Hermes becomes a different agent. It becomes a calibrated version of itself, tuned to your specific working style and environment.
+
+## Memory persistence across sessions
+
+Working memory does not persist. Everything else does, subject to retention policies:
+
+| Layer | Persists across sessions? | Retention policy |
+|---|---|---|
+| Working memory | No | Cleared at session end |
+| Episodic memory | Yes | Retained up to capacity; older low-relevance episodes evicted |
+| Semantic memory | Yes | Retained indefinitely; entries decay if contradicted or unused |
+| Skill definitions | Yes | Retained indefinitely; versioned |
+
+<Warning>
+  If you uninstall Hermes and reinstall it without exporting your memory store, you will lose all episodic and semantic memory. Back up your memory store before reinstalling or migrating to a new machine. See `hermes memory export` below.
+</Warning>
+
+## Inspecting and managing your agent's memory
+
+Hermes provides a CLI and an in-session interface for viewing and managing memory.
+
+**List recent episodes:**
+
+```bash
+hermes memory list --episodes
+```
+
+**View the contents of a specific episode:**
+
+```bash
+hermes memory show episode <episode-id>
+```
+
+**List semantic memory entries:**
+
+```bash
+hermes memory list --semantic
+```
+
+**Search semantic memory for a specific topic:**
+
+```bash
+hermes memory search "code style preferences"
+```
+
+**Delete a specific memory entry:**
+
+```bash
+hermes memory delete <entry-id>
+```
+
+**Clear all semantic memory:**
+
+```bash
+hermes memory clear --semantic
+```
+
+**Clear all episodic memory:**
+
+```bash
+hermes memory clear --episodes
+```
+
+**Export the full memory store:**
+
+```bash
+hermes memory export --output ./hermes-memory-backup.json
+```
+
+**Import a memory store:**
+
+```bash
+hermes memory import --file ./hermes-memory-backup.json
+```
+
+You can also interact with memory mid-session. Ask Hermes directly: "What do you remember about my code style preferences?" or "Forget what you know about my preferred branch naming convention." Hermes will surface or update the relevant semantic entries in real time.
+
+## Privacy considerations
+
+<AccordionGroup>
+  <Accordion title="What exactly does Hermes remember?">
+    Hermes stores structured summaries, not raw conversation transcripts. It retains the *shape* of interactions — what task was done, what the outcome was, what preferences were expressed — rather than verbatim records of everything you typed.
+
+    You can see exactly what's stored at any time by running `hermes memory list`. Nothing is retained that isn't accessible to you through this interface.
+  </Accordion>
+  <Accordion title="Where is memory stored?">
+    By default, memory is stored locally on your machine in the Hermes data directory. On most systems this is `~/.hermes/memory/`. No memory is sent to external servers unless you have explicitly configured Hermes to use a cloud memory backend.
+
+    Run `hermes config show` to verify where your memory store is located.
+  </Accordion>
+  <Accordion title="Can I delete everything Hermes knows about me?">
+    Yes. Running `hermes memory clear --all` removes all episodic and semantic memory entries. Skills are stored separately — use `hermes skills delete --all` to remove those as well.
+
+    After clearing memory, Hermes behaves like a new installation. It retains no preferences, no episode history, and no project context.
+  </Accordion>
+  <Accordion title="Does clearing memory affect Skills?">
+    No. Skills are stored in a separate layer and are not affected by memory clear operations. If you want to remove Skills as well, you need to do so explicitly with `hermes skills delete`. See [§05. Skills](/core/skills) for details.
+  </Accordion>
+  <Accordion title="What happens to memory when I work on multiple machines?">
+    By default, memory is local to each machine. If you switch machines, you start with a fresh memory store on the new machine. To share memory across machines, you can export from one machine and import on another, or configure a shared memory backend if your Hermes deployment supports it.
+  </Accordion>
+  <Accordion title="Can Hermes be instructed to never remember something?">
+    Yes. You can tell Hermes mid-session: "Don't save anything from this session to memory." It will skip the reflection and distillation steps for that session. You can also set a `memory.session_recording` preference to `off` globally, though this significantly limits Hermes's ability to improve over time.
+  </Accordion>
+</AccordionGroup>
+
+The next chapter covers Skills — how Hermes creates them automatically from patterns it observes, and how you can view, edit, and manage them.

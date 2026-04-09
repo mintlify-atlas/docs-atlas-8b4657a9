@@ -1,0 +1,267 @@
+---
+title: "§06. The tool ecosystem"
+sidebarTitle: "Tool ecosystem"
+description: "The built-in tools Hermes ships with, how it selects and orchestrates them, and how to extend, configure, and constrain them safely."
+keywords: ["tools", "built-in tools", "MCP", "custom tools", "tool safety", "file system", "web search", "code execution"]
+---
+
+An AI agent without tools is an AI assistant — it can reason and communicate, but it can't act. Tools are what turn Hermes into an agent: the ability to read and write files, run code, search the web, and interact with external systems. This chapter covers what tools Hermes ships with, how it decides which ones to use, and how to extend or constrain its tool access for your context.
+
+## Built-in tools
+
+Hermes ships with a core set of tools that cover the most common agentic tasks. These tools are available in every installation without additional configuration.
+
+<CardGroup cols={2}>
+  <Card title="File system" icon="folder-open">
+    Read, write, create, move, delete, and search files and directories. Includes recursive search, glob pattern matching, and binary file inspection. File operations respect the working directory constraints you configure.
+  </Card>
+  <Card title="Web search" icon="magnifying-glass">
+    Search the web and retrieve page content. Supports both structured search queries and direct URL fetching. Results are parsed and summarized before being passed to Hermes's reasoning layer.
+  </Card>
+  <Card title="Code execution" icon="code">
+    Run code in sandboxed environments. Supports Python, JavaScript/Node.js, Bash, and TypeScript out of the box. Execution is isolated from your system unless you explicitly grant elevated access.
+  </Card>
+  <Card title="Terminal" icon="terminal">
+    Execute shell commands, manage processes, and interact with command-line tools. The terminal tool is the most powerful — and the most constrained by default. See the safety section below.
+  </Card>
+  <Card title="Browser automation" icon="globe">
+    Control a headless browser for tasks that require JavaScript rendering, form interaction, or multi-step web workflows. Used when web search alone is insufficient.
+  </Card>
+  <Card title="Memory access" icon="database">
+    Read and write to the [memory system](/core/memory-system) and [Skills](/core/skills) library. Used internally by Hermes to retrieve context and persist learning. You can also invoke it explicitly to ask Hermes to recall or update specific memories.
+  </Card>
+</CardGroup>
+
+## How Hermes selects and orchestrates tools
+
+Hermes doesn't expose a tool selection UI — it selects tools as part of its task planning process. When you give it a task, it decomposes the task into steps, then maps each step to the most appropriate available tool.
+
+Tool selection follows a few practical heuristics:
+
+**Prefer the least-privilege tool.** If a task can be accomplished with read-only file access, Hermes won't invoke terminal execution. If it can be done with a web search, it won't launch browser automation. This limits the surface area of unintended side effects.
+
+**Use tool outputs to verify assumptions.** Before writing or deleting files, Hermes typically reads the current state first. Before executing a command, it often checks whether the required binary exists. This "look before you leap" pattern catches configuration mismatches early.
+
+**Chain tool calls when needed.** Complex tasks often require multiple sequential tool calls — read a file, understand its structure, run a linter, interpret the output, write a fix, run tests to verify. Hermes orchestrates these chains automatically, passing outputs from one step as inputs to the next.
+
+**Respect prior failures.** If a specific tool call pattern has failed in your environment before (captured in semantic memory), Hermes adjusts its approach — trying an alternative command, adjusting parameters, or asking you before proceeding.
+
+<Note>
+  You can observe Hermes's tool selection reasoning in real time. If you want to understand why it chose a particular tool, ask: "Why did you use the terminal instead of the file system tool for that?" Hermes will explain its reasoning.
+</Note>
+
+## Tool safety
+
+Tools are powerful and their misuse can have consequences that are difficult to reverse. Hermes ships with a safety layer that constrains what tools can do.
+
+**Default constraints:**
+
+- The terminal tool cannot execute commands that modify system configuration, install packages outside a project directory, or run as root, unless you explicitly grant permission.
+- File system writes outside the configured working directory require confirmation.
+- Web requests to URLs not matching a configured allowlist require confirmation in sensitive environments.
+- Code execution environments are sandboxed — they cannot access your host file system unless you grant explicit access.
+
+**Configuring constraints:**
+
+Constraints are defined in your Hermes configuration file. The `tools.constraints` section controls what each tool is and isn't allowed to do.
+
+```yaml hermes.config.yaml
+tools:
+  constraints:
+    terminal:
+      allowed_commands:
+        - "npm"
+        - "git"
+        - "python"
+        - "pytest"
+      blocked_commands:
+        - "rm -rf"
+        - "sudo"
+        - "chmod"
+      require_confirmation_for:
+        - "git push"
+        - "npm publish"
+
+    file_system:
+      working_directory: "/home/user/projects"
+      allow_writes_outside_workdir: false
+      blocked_paths:
+        - "/etc"
+        - "/usr"
+        - "~/.ssh"
+
+    code_execution:
+      sandbox: true
+      allowed_languages:
+        - python
+        - javascript
+        - bash
+      max_execution_time_seconds: 30
+
+    web_search:
+      enabled: true
+      browser_automation: false
+```
+
+<Warning>
+  Hermes will never override safety constraints through the learning loop. Constraints are static configuration — the agent cannot relax them on its own to accomplish a task. If a task requires relaxing a constraint, Hermes will tell you and ask you to update the configuration manually.
+</Warning>
+
+**Confirmation prompts:**
+
+When Hermes encounters an action that matches your `require_confirmation_for` list, it pauses and shows you what it's about to do before executing. This is the "reins" mechanism in practice — you maintain oversight over the highest-stakes actions.
+
+```
+Hermes wants to run: git push origin main
+
+This will push 3 commits to the remote repository.
+Proceed? [y/N]
+```
+
+You can also trigger confirmation prompts for specific tool types globally:
+
+```yaml hermes.config.yaml
+tools:
+  confirmation_policy: "always"   # always | on_risk | never
+```
+
+## Extending Hermes with custom tools
+
+Hermes supports custom tools through a straightforward definition format. A custom tool is a named function with a description, an input schema, and an implementation.
+
+<Steps>
+  <Step title="Define the tool">
+    Create a YAML definition file in your tools directory (default: `~/.hermes/tools/`). Define the tool's name, description, input schema, and the command or script to invoke.
+
+    ```yaml ~/.hermes/tools/jira-lookup.tool.yaml
+    name: jira-lookup
+    description: >
+      Look up a Jira ticket by ID and return its title, status,
+      assignee, and description. Use when the user mentions a ticket
+      number or asks about the status of a task.
+    input_schema:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+          description: "Jira ticket ID, e.g. PROJ-1234"
+      required:
+        - ticket_id
+    implementation:
+      type: script
+      command: "python ~/.hermes/tools/scripts/jira_lookup.py"
+      args: ["{{ticket_id}}"]
+      timeout_seconds: 10
+    ```
+  </Step>
+  <Step title="Implement the tool">
+    Write the script or binary that the tool invokes. The implementation receives inputs as command-line arguments or via stdin (depending on your `implementation.type` setting) and must write its output to stdout as JSON.
+
+    ```python ~/.hermes/tools/scripts/jira_lookup.py
+    import sys
+    import json
+    import requests
+
+    ticket_id = sys.argv[1]
+    base_url = "https://your-org.atlassian.net"
+    token = open("/home/user/.hermes/secrets/jira_token").read().strip()
+
+    response = requests.get(
+        f"{base_url}/rest/api/3/issue/{ticket_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    issue = response.json()
+
+    print(json.dumps({
+        "id": ticket_id,
+        "title": issue["fields"]["summary"],
+        "status": issue["fields"]["status"]["name"],
+        "assignee": issue["fields"]["assignee"]["displayName"],
+        "description": issue["fields"]["description"]
+    }))
+    ```
+  </Step>
+  <Step title="Register the tool">
+    Tell Hermes to load the tool by adding it to your configuration, or by placing the definition file in the default tools directory. Hermes scans the tools directory at startup.
+
+    ```yaml hermes.config.yaml
+    tools:
+      custom_tools_directory: "~/.hermes/tools"
+      enabled_custom_tools:
+        - jira-lookup
+    ```
+  </Step>
+  <Step title="Verify the tool is available">
+    Start a new Hermes session and ask it to describe its available tools. You should see your custom tool listed.
+
+    ```
+    > What tools do you have access to?
+
+    I have access to the following tools:
+    ...
+    - jira-lookup: Look up a Jira ticket by ID and return its title,
+      status, assignee, and description.
+    ```
+
+    You can also run the tool directly to test it before using it in a session: `hermes tools test jira-lookup --input '{"ticket_id": "PROJ-1234"}'`.
+  </Step>
+</Steps>
+
+## Integration with MCP servers
+
+Hermes supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) — an open standard for connecting AI agents to external tools and data sources. Any MCP-compatible server can be connected to Hermes and its tools will be made available alongside the built-in ones.
+
+**Connecting an MCP server:**
+
+```yaml hermes.config.yaml
+tools:
+  mcp_servers:
+    - name: "github"
+      transport: "stdio"
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-github"]
+      env:
+        GITHUB_TOKEN: "${GITHUB_TOKEN}"
+
+    - name: "postgres"
+      transport: "stdio"
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-postgres"]
+      env:
+        POSTGRES_URL: "${POSTGRES_URL}"
+```
+
+Once connected, MCP tools are available to Hermes exactly like built-in tools. Hermes's tool selection logic treats them equally — it selects the most appropriate tool for the task regardless of whether it's built-in or MCP-provided.
+
+<Note>
+  MCP tools are subject to the same safety constraints as built-in tools. You can add MCP tool names to your `blocked_commands` or `require_confirmation_for` lists. Hermes will apply your constraints consistently across all tools.
+</Note>
+
+**Discovering available MCP servers:**
+
+The MCP ecosystem is growing rapidly. Servers are available for GitHub, Linear, Slack, databases, file formats, and many other integrations. Check the official MCP server registry at [modelcontextprotocol.io/servers](https://modelcontextprotocol.io/servers) for an up-to-date list.
+
+## Best practices for configuring tools
+
+<AccordionGroup>
+  <Accordion title="Start with minimal permissions and expand as needed">
+    The default tool configuration is intentionally conservative. Start there, run a few sessions, and expand permissions only when you hit a legitimate constraint. It's much easier to grant additional access than to clean up after an unintended side effect.
+  </Accordion>
+  <Accordion title="Use working directory constraints seriously">
+    Setting a tight `working_directory` is one of the most effective ways to limit the blast radius of tool operations. Hermes works well within a defined project root — confine it there unless you have a specific reason not to.
+  </Accordion>
+  <Accordion title="Put high-stakes commands in require_confirmation_for">
+    Identify the commands in your workflow that are difficult or impossible to reverse — pushes, publishes, deployments, database writes — and add them to the confirmation list. The slight friction of a confirmation prompt is worth it for operations that matter.
+  </Accordion>
+  <Accordion title="Write descriptive custom tool definitions">
+    The quality of Hermes's tool selection depends heavily on how well you describe your custom tools. The `description` field is used by Hermes to decide when to invoke the tool — write it as if you're explaining to a colleague when they should reach for this particular utility.
+  </Accordion>
+  <Accordion title="Test custom tools independently before integrating">
+    Run `hermes tools test <tool-name>` with representative inputs before relying on a custom tool in a real session. A tool that silently fails or returns malformed output will cause Hermes to behave unpredictably.
+  </Accordion>
+  <Accordion title="Monitor tool usage with session logs">
+    Use `hermes sessions log --last` to review the tool calls from your most recent session. This helps you spot inefficient patterns (Hermes making redundant calls) or unexpected behavior (Hermes choosing a tool you didn't expect for a given task).
+  </Accordion>
+</AccordionGroup>
+
+This concludes Part 2: Core Mechanisms. The next part covers hands-on setup — installing Hermes, running your first conversation, and configuring it for your environment.
